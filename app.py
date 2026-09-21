@@ -8,8 +8,8 @@ from openai import OpenAI
 # ==============================
 
 client = OpenAI(
-    base_url="http://localhost:11434/v1",
-    api_key="ollama"
+    base_url="https://api.groq.com/openai/v1",
+    api_key=st.secrets["GROQ_API_KEY"]
 )
 
 
@@ -17,7 +17,7 @@ def ask_ai(prompt):
     """Send a question to local Ollama AI."""
 
     response = client.chat.completions.create(
-        model="llama3.2",
+        model="openai/gpt-oss-20b"
         messages=[
             {
                 "role": "user",
