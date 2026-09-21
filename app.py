@@ -293,6 +293,13 @@ elif st.session_state.page == "AI Quiz Generator":
         st.session_state.page = "Home"
         st.rerun()
 
+    # Session state
+    if "quiz_questions" not in st.session_state:
+        st.session_state.quiz_questions = []
+
+    if "quiz_score" not in st.session_state:
+        st.session_state.quiz_score = None
+
     topic = st.text_input(
         "Enter quiz topic:",
         placeholder="Example: Data Science"
@@ -302,6 +309,10 @@ elif st.session_state.page == "AI Quiz Generator":
         "Number of Questions",
         [5, 10]
     )
+
+    # -------------------------
+    # GENERATE QUIZ
+    # -------------------------
 
     if st.button("Generate Quiz"):
 
@@ -318,7 +329,7 @@ for college students on:
 
 {topic}
 
-Use exactly this format for every question:
+Use exactly this format:
 
 QUESTION: question text
 A: option A
@@ -334,7 +345,7 @@ Make questions clear and educational.
 
                 quiz_text = ask_ai(prompt)
 
-            # Parse questions
+            # Parse quiz
             lines = quiz_text.splitlines()
 
             questions = []
@@ -345,6 +356,7 @@ Make questions clear and educational.
                 line = line.strip()
 
                 if line.startswith("QUESTION:"):
+
                     if current.get("question"):
                         questions.append(current)
 
@@ -367,14 +379,18 @@ Make questions clear and educational.
                     current["D"] = line[2:].strip()
 
                 elif line.startswith("ANSWER:"):
-                    current["answer"] = line.replace(
-                        "ANSWER:", ""
-                    ).strip().upper()
+                    current["answer"] = (
+                        line.replace(
+                            "ANSWER:", ""
+                        )
+                        .strip()
+                        .upper()
+                    )
 
             if current.get("question"):
                 questions.append(current)
 
-            # Keep only complete questions
+            # Keep complete questions only
             valid_questions = []
 
             for q in questions:
@@ -389,213 +405,158 @@ Make questions clear and educational.
                 ):
                     valid_questions.append(q)
 
-            # Retry if AI generated fewer questions
-            attempts = 0
+            # Save quiz permanently in session
+            st.session_state.quiz_questions = (
+                valid_questions[:number_of_questions]
+            )
 
-            while (
-                len(valid_questions) < number_of_questions
-                and attempts < 3
-            ):
+            st.session_state.quiz_score = None
 
-                attempts += 1
+    # -------------------------
+    # SHOW GENERATED QUIZ
+    # -------------------------
 
-                missing = number_of_questions - len(valid_questions)
+    if st.session_state.quiz_questions:
 
-                retry_prompt = f"""
-Create exactly {missing} additional multiple-choice questions
-on the topic:
+        st.success(
+            f"Generated {len(st.session_state.quiz_questions)} questions."
+        )
 
-{topic}
+        questions = st.session_state.quiz_questions
 
-Do NOT repeat common questions.
+        # FORM
+        with st.form("quiz_form"):
 
-Use exactly this format:
+            for i, q in enumerate(questions):
 
-QUESTION: question text
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: A
+                st.markdown(
+                    f"### Question {i + 1}"
+                )
 
-ANSWER must be only A, B, C or D.
-"""
+                st.write(q["question"])
 
-                retry_text = ask_ai(retry_prompt)
+                st.radio(
+                    "Choose your answer:",
+                    [
+                        q["A"],
+                        q["B"],
+                        q["C"],
+                        q["D"]
+                    ],
+                    key=f"quiz_answer_{i}"
+                )
 
-                retry_lines = retry_text.splitlines()
+            submitted = st.form_submit_button(
+                "✅ Submit Quiz"
+            )
 
-                current = {}
+        # -------------------------
+        # SUBMIT
+        # -------------------------
 
-                for line in retry_lines:
+        if submitted:
 
-                    line = line.strip()
+            score = 0
 
-                    if line.startswith("QUESTION:"):
+            for i, q in enumerate(questions):
 
-                        if current.get("question"):
-                            questions.append(current)
+                selected = st.session_state[
+                    f"quiz_answer_{i}"
+                ]
 
-                        current = {
-                            "question": line.replace(
-                                "QUESTION:", ""
-                            ).strip()
-                        }
+                correct_option = q[
+                    q["answer"]
+                ]
 
-                    elif line.startswith("A:"):
-                        current["A"] = line[2:].strip()
+                if selected == correct_option:
+                    score += 1
 
-                    elif line.startswith("B:"):
-                        current["B"] = line[2:].strip()
+            total = len(questions)
 
-                    elif line.startswith("C:"):
-                        current["C"] = line[2:].strip()
+            percentage = (
+                score / total
+            ) * 100
 
-                    elif line.startswith("D:"):
-                        current["D"] = line[2:].strip()
+            st.session_state.quiz_score = (
+                score,
+                total,
+                percentage
+            )
 
-                    elif line.startswith("ANSWER:"):
-                        current["answer"] = line.replace(
-                            "ANSWER:", ""
-                        ).strip().upper()
+        # -------------------------
+        # RESULT
+        # -------------------------
 
-                if current.get("question"):
-                    questions.append(current)
+        if st.session_state.quiz_score is not None:
 
-                valid_questions = []
+            score, total, percentage = (
+                st.session_state.quiz_score
+            )
 
-                for q in questions:
+            st.divider()
 
-                    if (
-                        q.get("question")
-                        and q.get("A")
-                        and q.get("B")
-                        and q.get("C")
-                        and q.get("D")
-                        and q.get("answer")
-                        in ["A", "B", "C", "D"]
-                    ):
-                        valid_questions.append(q)
+            st.subheader("🏆 Quiz Result")
 
-            valid_questions = valid_questions[
-                :number_of_questions
-            ]
+            st.metric(
+                "Score",
+                f"{score}/{total}"
+            )
 
-            if not valid_questions:
+            st.progress(
+                percentage / 100
+            )
 
-                st.error(
-                    "AI could not generate a valid quiz. Please try again."
+            st.write(
+                f"Percentage: {percentage:.1f}%"
+            )
+
+            if percentage >= 80:
+
+                st.success(
+                    "Excellent work! 🎉"
+                )
+
+            elif percentage >= 50:
+
+                st.info(
+                    "Good job! Keep practicing. 👍"
                 )
 
             else:
 
-                st.success(
-                    f"Generated {len(valid_questions)} questions."
+                st.warning(
+                    "Keep studying and try again. 💪"
                 )
 
-                user_answers = {}
+            # -------------------------
+            # ANSWER REVIEW
+            # -------------------------
 
-                for i, q in enumerate(valid_questions):
+            st.subheader("📋 Answer Review")
 
-                    st.markdown(
-                        f"### Question {i + 1}"
+            for i, q in enumerate(questions):
+
+                selected = st.session_state[
+                    f"quiz_answer_{i}"
+                ]
+
+                correct_option = q[
+                    q["answer"]
+                ]
+
+                if selected == correct_option:
+
+                    st.success(
+                        f"Question {i + 1}: Correct ✅"
                     )
 
-                    st.write(q["question"])
+                else:
 
-                    user_answers[i] = st.radio(
-                        "Choose your answer:",
-                        [
-                            q["A"],
-                            q["B"],
-                            q["C"],
-                            q["D"]
-                        ],
-                        key=f"quiz_{i}"
+                    st.error(
+                        f"Question {i + 1}: "
+                        f"Your answer: {selected} | "
+                        f"Correct answer: {correct_option}"
                     )
-
-                if st.button("✅ Submit Quiz"):
-
-                    score = 0
-
-                    answer_letters = {
-                        q["A"]: "A",
-                        q["B"]: "B",
-                        q["C"]: "C",
-                        q["D"]: "D"
-                    }
-
-                    for i, q in enumerate(valid_questions):
-
-                        selected = user_answers[i]
-
-                        selected_letter = answer_letters.get(
-                            selected
-                        )
-
-                        if selected_letter == q["answer"]:
-                            score += 1
-
-                    total = len(valid_questions)
-
-                    percentage = (
-                        score / total
-                    ) * 100
-
-                    st.divider()
-
-                    st.subheader("🏆 Quiz Result")
-
-                    st.metric(
-                        "Score",
-                        f"{score}/{total}"
-                    )
-
-                    st.progress(
-                        percentage / 100
-                    )
-
-                    st.write(
-                        f"Percentage: {percentage:.1f}%"
-                    )
-
-                    if percentage >= 80:
-                        st.success(
-                            "Excellent work! 🎉"
-                        )
-
-                    elif percentage >= 50:
-                        st.info(
-                            "Good job! Keep practicing. 👍"
-                        )
-
-                    else:
-                        st.warning(
-                            "Keep studying and try again. 💪"
-                        )
-
-                    st.subheader("📋 Answer Review")
-
-                    for i, q in enumerate(valid_questions):
-
-                        selected = user_answers[i]
-
-                        correct_option = q[
-                            q["answer"]
-                        ]
-
-                        if selected == correct_option:
-
-                            st.success(
-                                f"Question {i + 1}: Correct ✅"
-                            )
-
-                        else:
-
-                            st.error(
-                                f"Question {i + 1}: "
-                                f"Correct answer: {correct_option}"
-                            )
 
 
 # =========================
