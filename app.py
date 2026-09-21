@@ -14,18 +14,12 @@ client = OpenAI(
 
 
 def ask_ai(prompt):
-    """Send a question to local Ollama AI."""
-
     response = client.chat.completions.create(
-        model="openai/gpt-oss-20b"
+        model="openai/gpt-oss-20b",
         messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "user", "content": prompt}
         ]
     )
-
     return response.choices[0].message.content
 
 
