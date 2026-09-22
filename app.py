@@ -5,6 +5,7 @@ from supabase import create_client
 from datetime import date, timedelta
 import json
 import re
+import time
 
 
 # =========================================================
@@ -20,62 +21,106 @@ st.set_page_config(
 
 
 # =========================================================
-# CSS - NO HTML USED
+# SESSION STATE
+# =========================================================
+
+if "intro_done" not in st.session_state:
+    st.session_state.intro_done = False
+
+if "quiz_questions" not in st.session_state:
+    st.session_state.quiz_questions = []
+
+if "quiz_submitted" not in st.session_state:
+    st.session_state.quiz_submitted = False
+
+if "quiz_score" not in st.session_state:
+    st.session_state.quiz_score = None
+
+if "flashcards" not in st.session_state:
+    st.session_state.flashcards = []
+
+
+# =========================================================
+# GLOBAL CSS
 # =========================================================
 
 st.markdown(
     """
     <style>
 
+    /* =========================================
+       MAIN APP
+       ========================================= */
+
     .stApp {
         background:
         radial-gradient(
-            circle at 10% 10%,
-            rgba(88, 80, 255, 0.16),
-            transparent 30%
+            circle at 15% 10%,
+            rgba(92, 76, 255, 0.14),
+            transparent 28%
         ),
         radial-gradient(
-            circle at 90% 20%,
-            rgba(0, 190, 255, 0.10),
-            transparent 30%
+            circle at 85% 15%,
+            rgba(0, 200, 255, 0.08),
+            transparent 25%
         ),
-        #080b18;
+        #070a14;
     }
 
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 3rem;
+        max-width: 1250px;
     }
+
+
+    /* =========================================
+       SIDEBAR
+       ========================================= */
 
     section[data-testid="stSidebar"] {
-        background: #090d1c;
-        border-right: 1px solid rgba(255,255,255,0.08);
+        background: #080b17;
+        border-right: 1px solid rgba(255,255,255,0.07);
     }
 
+
+    /* =========================================
+       HEADINGS
+       ========================================= */
+
     h1 {
+        color: white !important;
         font-weight: 800 !important;
-        color: #ffffff !important;
+        letter-spacing: -1px;
     }
 
     h2, h3 {
-        color: #ffffff !important;
+        color: white !important;
     }
 
+
+    /* =========================================
+       METRICS
+       ========================================= */
+
     div[data-testid="stMetric"] {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.09);
+        background: rgba(255,255,255,0.045);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 18px;
         padding: 20px;
-        transition: 0.25s;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(12px);
     }
 
     div[data-testid="stMetric"]:hover {
-        transform: translateY(-4px);
-        border-color: rgba(100,120,255,0.45);
+        transform: translateY(-5px);
+        border-color: rgba(100,120,255,0.35);
+        box-shadow:
+            0 12px 35px rgba(60,70,255,0.15);
     }
 
     div[data-testid="stMetricLabel"] {
-        color: #aeb8d4 !important;
+        color: #9da8c4 !important;
     }
 
     div[data-testid="stMetricValue"] {
@@ -83,38 +128,288 @@ st.markdown(
         font-weight: 800 !important;
     }
 
+
+    /* =========================================
+       BUTTONS
+       ========================================= */
+
     .stButton > button {
         width: 100%;
-        border-radius: 12px;
         border: none;
+        border-radius: 12px;
+        padding: 0.7rem 1rem;
         color: white;
         font-weight: 700;
-        background: linear-gradient(
-            90deg,
-            #5967ff,
-            #8b5cf6
-        );
-        transition: 0.25s;
+        background:
+            linear-gradient(
+                90deg,
+                #5865f2,
+                #7957e8
+            );
+        transition: all 0.25s ease;
     }
 
     .stButton > button:hover {
         transform: translateY(-3px);
         box-shadow:
-            0 10px 30px rgba(90,100,255,0.35);
+            0 10px 30px rgba(88,101,242,0.30);
     }
+
+
+    /* =========================================
+       INPUTS
+       ========================================= */
 
     .stTextInput input,
     .stTextArea textarea {
-        background: rgba(255,255,255,0.05) !important;
+        background: rgba(255,255,255,0.045) !important;
         color: white !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
         border-radius: 12px !important;
     }
 
+
+    /* =========================================
+       EXPANDERS
+       ========================================= */
+
     div[data-testid="stExpander"] {
-        background: rgba(255,255,255,0.04);
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.07);
         border-radius: 14px;
-        border: 1px solid rgba(255,255,255,0.08);
     }
+
+
+    /* =========================================
+       PROGRESS
+       ========================================= */
+
+    div[data-testid="stProgressBar"] > div > div {
+        background:
+            linear-gradient(
+                90deg,
+                #5865f2,
+                #8b5cf6,
+                #4fdcff
+            );
+    }
+
+
+    /* =========================================
+       HOME HERO
+       ========================================= */
+
+    .home-title {
+        font-size: 3rem;
+        font-weight: 800;
+        background:
+            linear-gradient(
+                90deg,
+                #ffffff,
+                #9ba8ff,
+                #5bdcff
+            );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -1.5px;
+    }
+
+    .home-subtitle {
+        color: #9da8c4;
+        font-size: 1.05rem;
+        margin-top: 5px;
+        margin-bottom: 30px;
+    }
+
+
+    /* =========================================
+       FEATURE CARDS
+       ========================================= */
+
+    .feature-card {
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(110,120,255,0.35);
+        box-shadow:
+            0 12px 35px rgba(70,80,255,0.12);
+    }
+
+
+    /* =========================================
+       SPLASH SCREEN
+       ========================================= */
+
+    .splash-wrapper {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background:
+            radial-gradient(
+                circle at center,
+                #151a3b 0%,
+                #090c1b 45%,
+                #05070f 100%
+            );
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        animation:
+            splashExit 0.9s ease-in-out 3.2s forwards;
+
+        pointer-events: none;
+    }
+
+
+    .splash-content {
+        text-align: center;
+        animation:
+            splashEnter 1.4s cubic-bezier(.16,1,.3,1);
+    }
+
+
+    .splash-icon {
+        font-size: 5rem;
+        margin-bottom: 15px;
+
+        animation:
+            iconFloat 2.5s ease-in-out infinite;
+    }
+
+
+    .splash-title {
+        font-size: 4.2rem;
+        font-weight: 900;
+        letter-spacing: -2px;
+
+        background:
+            linear-gradient(
+                90deg,
+                #ffffff,
+                #a3adff,
+                #58d9ff
+            );
+
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+
+    .splash-subtitle {
+        color: #8994b2;
+        font-size: 1rem;
+        margin-top: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+
+        animation:
+            subtitleFade 1.5s ease 0.5s both;
+    }
+
+
+    .splash-line {
+        width: 0;
+        height: 2px;
+        margin: 25px auto 0;
+
+        background:
+            linear-gradient(
+                90deg,
+                #5865f2,
+                #8b5cf6,
+                #55d6ff
+            );
+
+        border-radius: 10px;
+
+        animation:
+            lineGrow 1.5s ease 0.8s forwards;
+    }
+
+
+    @keyframes splashEnter {
+
+        0% {
+            opacity: 0;
+            transform: translateY(35px) scale(0.92);
+        }
+
+        60% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+    }
+
+
+    @keyframes iconFloat {
+
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+
+    }
+
+
+    @keyframes subtitleFade {
+
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    }
+
+
+    @keyframes lineGrow {
+
+        from {
+            width: 0;
+        }
+
+        to {
+            width: 180px;
+        }
+
+    }
+
+
+    @keyframes splashExit {
+
+        0% {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        100% {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+    }
+
 
     </style>
     """,
@@ -123,7 +418,47 @@ st.markdown(
 
 
 # =========================================================
-# GROQ
+# SPLASH SCREEN
+# =========================================================
+
+if not st.session_state.intro_done:
+
+    st.markdown(
+        """
+        <div class="splash-wrapper">
+
+            <div class="splash-content">
+
+                <div class="splash-icon">
+                    📚
+                </div>
+
+                <div class="splash-title">
+                    StudySync
+                </div>
+
+                <div class="splash-subtitle">
+                    AI Powered Study Companion
+                </div>
+
+                <div class="splash-line"></div>
+
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    time.sleep(4)
+
+    st.session_state.intro_done = True
+
+    st.rerun()
+
+
+# =========================================================
+# GROQ AI
 # =========================================================
 
 client = OpenAI(
@@ -149,7 +484,7 @@ supabase = get_supabase()
 
 
 # =========================================================
-# DATABASE
+# DATABASE FUNCTIONS
 # =========================================================
 
 def get_progress():
@@ -264,7 +599,7 @@ def get_quiz_history():
 
 
 # =========================================================
-# AI
+# AI FUNCTION
 # =========================================================
 
 def ask_ai(prompt):
@@ -274,15 +609,15 @@ def ask_ai(prompt):
         messages=[
             {
                 "role": "system",
-                "content":
-                """
+                "content": """
                 You are StudySync,
                 an AI study assistant.
 
-                Explain topics in simple,
+                Explain concepts in simple,
                 student-friendly language.
 
-                Use headings, bullet points,
+                Use clear headings,
+                bullet points,
                 examples and exam-oriented explanations.
                 """
             },
@@ -295,23 +630,6 @@ def ask_ai(prompt):
     )
 
     return response.choices[0].message.content
-
-
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "quiz_questions" not in st.session_state:
-    st.session_state.quiz_questions = []
-
-if "quiz_submitted" not in st.session_state:
-    st.session_state.quiz_submitted = False
-
-if "quiz_score" not in st.session_state:
-    st.session_state.quiz_score = None
-
-if "flashcards" not in st.session_state:
-    st.session_state.flashcards = []
 
 
 # =========================================================
@@ -346,18 +664,18 @@ page = st.sidebar.radio(
 
 if page == "🏠 Home":
 
-    st.title("Welcome to StudySync 🚀")
-
-    st.subheader(
-        "Your intelligent AI-powered study companion."
+    st.markdown(
+        '<div class="home-title">Welcome to StudySync 🚀</div>',
+        unsafe_allow_html=True
     )
 
-    st.write(
-        "Learn smarter. Practice better. "
-        "Track your progress."
+    st.markdown(
+        '<div class="home-subtitle">'
+        'Your intelligent AI-powered study companion. '
+        'Learn smarter. Practice better. Track your progress.'
+        '</div>',
+        unsafe_allow_html=True
     )
-
-    st.divider()
 
     progress = get_progress()
 
@@ -490,6 +808,7 @@ elif page == "📄 Study Material":
             extracted = pdf_page.extract_text()
 
             if extracted:
+
                 text += extracted + "\n"
 
         st.success(
@@ -499,9 +818,7 @@ elif page == "📄 Study Material":
 
         with st.expander("👀 View extracted text"):
 
-            st.write(
-                text[:10000]
-            )
+            st.write(text[:10000])
 
         if st.button("✨ Generate AI Notes"):
 
@@ -534,7 +851,7 @@ elif page == "📄 Study Material":
 
 
 # =========================================================
-# AI ASSISTANT
+# AI STUDY ASSISTANT
 # =========================================================
 
 elif page == "🤖 AI Study Assistant":
@@ -575,7 +892,7 @@ elif page == "🤖 AI Study Assistant":
 
 
 # =========================================================
-# NOTES
+# AI NOTES
 # =========================================================
 
 elif page == "📝 AI Notes Generator":
