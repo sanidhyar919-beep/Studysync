@@ -8,7 +8,7 @@ import re
 
 
 # =========================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =========================================================
 
 st.set_page_config(
@@ -20,7 +20,7 @@ st.set_page_config(
 
 
 # =========================================================
-# MODERN UI / CSS
+# MODERN UI
 # =========================================================
 
 st.markdown("""
@@ -32,498 +32,161 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* =========================
-   MAIN BACKGROUND
-========================= */
-
 .stApp {
     background:
-        radial-gradient(
-            circle at 10% 10%,
-            rgba(91, 74, 255, 0.18),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 90% 20%,
-            rgba(0, 200, 255, 0.12),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 50% 90%,
-            rgba(139, 92, 246, 0.10),
-            transparent 30%
-        ),
-        linear-gradient(
-            135deg,
-            #080b18 0%,
-            #0d1024 45%,
-            #080b18 100%
-        );
-
+        radial-gradient(circle at 10% 10%, rgba(91, 74, 255, 0.18), transparent 30%),
+        radial-gradient(circle at 90% 20%, rgba(0, 200, 255, 0.12), transparent 30%),
+        linear-gradient(135deg, #080b18 0%, #0d1024 45%, #080b18 100%);
     color: #f5f7ff;
 }
 
-
-/* =========================
-   PAGE ANIMATION
-========================= */
-
 .main .block-container {
-    animation: pageFade 0.7s ease-in-out;
     padding-top: 2rem;
     padding-bottom: 3rem;
+    animation: pageFade 0.6s ease;
 }
 
 @keyframes pageFade {
-
     from {
         opacity: 0;
-        transform: translateY(15px);
+        transform: translateY(12px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
-
 }
 
-
-/* =========================
-   HEADINGS
-========================= */
+/* Headings */
 
 h1 {
     font-size: 2.7rem !important;
     font-weight: 800 !important;
-
-    background:
-        linear-gradient(
-            90deg,
-            #ffffff,
-            #8ea2ff,
-            #55d6ff
-        );
-
+    background: linear-gradient(90deg, #ffffff, #8ea2ff, #55d6ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-h2,
-h3 {
+h2, h3 {
     color: #f5f7ff !important;
 }
 
-
-/* =========================
-   SIDEBAR
-========================= */
+/* Sidebar */
 
 section[data-testid="stSidebar"] {
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(13, 16, 36, 0.98),
-            rgba(8, 11, 24, 0.98)
-        );
-
-    border-right:
-        1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(
+        180deg,
+        #0d1024 0%,
+        #080b18 100%
+    );
+    border-right: 1px solid rgba(255,255,255,0.08);
 }
 
-section[data-testid="stSidebar"] h1 {
-
-    font-size: 1.8rem !important;
-
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+    color: #ffffff;
 }
 
-
-/* =========================
-   METRIC CARDS
-========================= */
+/* Metrics */
 
 div[data-testid="stMetric"] {
-
-    background:
-        rgba(255,255,255,0.055);
-
-    border:
-        1px solid rgba(255,255,255,0.09);
-
-    border-radius:
-        18px;
-
-    padding:
-        20px;
-
-    backdrop-filter:
-        blur(14px);
-
-    transition:
-        all 0.3s ease;
-
-    box-shadow:
-        0 8px 30px rgba(0,0,0,0.20);
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 18px;
+    padding: 20px;
+    backdrop-filter: blur(14px);
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.20);
 }
 
 div[data-testid="stMetric"]:hover {
-
-    transform:
-        translateY(-6px);
-
-    border-color:
-        rgba(120,140,255,0.45);
-
-    box-shadow:
-        0 15px 40px rgba(80,90,255,0.20);
+    transform: translateY(-5px);
+    border-color: rgba(120,140,255,0.45);
+    box-shadow: 0 15px 40px rgba(80,90,255,0.20);
 }
 
 div[data-testid="stMetricLabel"] {
-
-    color:
-        #aeb8d4 !important;
+    color: #aeb8d4 !important;
 }
 
 div[data-testid="stMetricValue"] {
-
-    color:
-        #ffffff !important;
-
-    font-weight:
-        800 !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
 }
 
-
-/* =========================
-   BUTTONS
-========================= */
+/* Buttons */
 
 .stButton > button {
-
-    width:
-        100%;
-
-    border:
-        none;
-
-    border-radius:
-        12px;
-
-    padding:
-        0.7rem 1.2rem;
-
-    font-weight:
-        700;
-
-    color:
-        white;
-
-    background:
-        linear-gradient(
-            90deg,
-            #5967ff,
-            #8b5cf6
-        );
-
-    transition:
-        all 0.25s ease;
-
-    box-shadow:
-        0 6px 20px rgba(91,103,255,0.25);
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.2rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(90deg, #5967ff, #8b5cf6);
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(91,103,255,0.25);
 }
 
 .stButton > button:hover {
-
-    transform:
-        translateY(-3px) scale(1.01);
-
-    box-shadow:
-        0 12px 30px rgba(91,103,255,0.40);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(91,103,255,0.40);
 }
 
-.stButton > button:active {
-
-    transform:
-        scale(0.97);
-}
-
-
-/* =========================
-   INPUTS
-========================= */
+/* Inputs */
 
 .stTextInput input,
 .stTextArea textarea {
-
-    background:
-        rgba(255,255,255,0.055) !important;
-
-    color:
-        white !important;
-
-    border:
-        1px solid rgba(255,255,255,0.10) !important;
-
-    border-radius:
-        12px !important;
+    background: rgba(255,255,255,0.055) !important;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-radius: 12px !important;
 }
 
-
-/* =========================
-   SELECT BOX
-========================= */
-
-div[data-baseweb="select"] > div {
-
-    background:
-        rgba(255,255,255,0.055) !important;
-
-    color:
-        white !important;
-
-    border:
-        1px solid rgba(255,255,255,0.10) !important;
-
-    border-radius:
-        12px !important;
-}
-
-
-/* =========================
-   FILE UPLOADER
-========================= */
+/* File uploader */
 
 section[data-testid="stFileUploader"] {
-
-    background:
-        rgba(255,255,255,0.04);
-
-    border:
-        1px dashed rgba(120,140,255,0.45);
-
-    border-radius:
-        16px;
-
-    padding:
-        10px;
-
-    transition:
-        0.3s ease;
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed rgba(120,140,255,0.45);
+    border-radius: 16px;
+    padding: 10px;
 }
 
-section[data-testid="stFileUploader"]:hover {
-
-    border-color:
-        #7c8cff;
-
-    background:
-        rgba(100,110,255,0.07);
-}
-
-
-/* =========================
-   EXPANDERS
-========================= */
+/* Expanders */
 
 div[data-testid="stExpander"] {
-
-    background:
-        rgba(255,255,255,0.045);
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    border-radius:
-        14px;
-
-    transition:
-        0.3s ease;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
 }
 
-div[data-testid="stExpander"]:hover {
-
-    border-color:
-        rgba(120,140,255,0.35);
-}
-
-
-/* =========================
-   PROGRESS BAR
-========================= */
+/* Progress */
 
 div[data-testid="stProgressBar"] > div > div {
-
-    background:
-        linear-gradient(
-            90deg,
-            #5967ff,
-            #8b5cf6,
-            #55d6ff
-        );
-
-    background-size:
-        200% 100%;
-
-    animation:
-        progressGlow 2s linear infinite;
+    background: linear-gradient(
+        90deg,
+        #5967ff,
+        #8b5cf6,
+        #55d6ff
+    );
+    background-size: 200% 100%;
+    animation: progressGlow 2s linear infinite;
 }
 
 @keyframes progressGlow {
-
     0% {
-        background-position:
-            0% 50%;
+        background-position: 0% 50%;
     }
-
     100% {
-        background-position:
-            200% 50%;
+        background-position: 200% 50%;
     }
-
 }
 
-
-/* =========================
-   ALERTS
-========================= */
-
-div[data-testid="stAlert"] {
-
-    border-radius:
-        14px;
-
-    backdrop-filter:
-        blur(10px);
-}
-
-
-/* =========================
-   DIVIDER
-========================= */
-
-hr {
-
-    border-color:
-        rgba(255,255,255,0.08) !important;
-}
-
-
-/* =========================
-   RADIO BUTTONS
-========================= */
-
-div[role="radiogroup"] label {
-
-    background:
-        rgba(255,255,255,0.035);
-
-    border-radius:
-        10px;
-
-    padding:
-        8px 12px;
-
-    margin-bottom:
-        5px;
-
-    transition:
-        0.2s ease;
-}
-
-div[role="radiogroup"] label:hover {
-
-    background:
-        rgba(100,110,255,0.12);
-}
-
-
-/* =========================
-   HOME FEATURE CARDS
-========================= */
-
-.feature-card {
-
-    background:
-        rgba(255,255,255,0.045);
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    border-radius:
-        18px;
-
-    padding:
-        22px;
-
-    margin-bottom:
-        15px;
-
-    transition:
-        all 0.3s ease;
-
-    backdrop-filter:
-        blur(12px);
-}
-
-.feature-card:hover {
-
-    transform:
-        translateY(-5px);
-
-    border-color:
-        rgba(120,140,255,0.35);
-
-    box-shadow:
-        0 15px 35px rgba(70,80,255,0.15);
-}
-
-.feature-icon {
-
-    font-size:
-        2rem;
-}
-
-.feature-title {
-
-    font-size:
-        1.1rem;
-
-    font-weight:
-        700;
-
-    margin-top:
-        8px;
-}
-
-.feature-text {
-
-    color:
-        #aeb8d4;
-
-    font-size:
-        0.9rem;
-
-    margin-top:
-        5px;
-}
-
-
-/* =========================
-   HERO SECTION
-========================= */
+/* Hero */
 
 .hero {
-
-    padding:
-        35px;
-
-    border-radius:
-        24px;
-
-    margin-bottom:
-        30px;
-
+    padding: 35px;
+    border-radius: 24px;
+    margin-bottom: 30px;
     background:
         linear-gradient(
             135deg,
@@ -531,94 +194,60 @@ div[role="radiogroup"] label:hover {
             rgba(139,92,246,0.10),
             rgba(0,200,255,0.07)
         );
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.25);
-
-    animation:
-        heroFloat 4s ease-in-out infinite;
-}
-
-@keyframes heroFloat {
-
-    0%,
-    100% {
-        transform:
-            translateY(0);
-    }
-
-    50% {
-        transform:
-            translateY(-5px);
-    }
-
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
 }
 
 .hero-title {
-
-    font-size:
-        3.2rem;
-
-    font-weight:
-        800;
-
-    background:
-        linear-gradient(
-            90deg,
-            #ffffff,
-            #8ea2ff,
-            #55d6ff
-        );
-
-    -webkit-background-clip:
-        text;
-
-    -webkit-text-fill-color:
-        transparent;
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(
+        90deg,
+        #ffffff,
+        #8ea2ff,
+        #55d6ff
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .hero-subtitle {
-
-    color:
-        #aeb8d4;
-
-    font-size:
-        1.1rem;
-
-    margin-top:
-        8px;
+    color: #aeb8d4;
+    font-size: 1.1rem;
+    margin-top: 8px;
 }
 
+/* Feature cards */
 
-/* =========================
-   SCROLLBAR
-========================= */
-
-::-webkit-scrollbar {
-
-    width:
-        8px;
+.feature-card {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-track {
-
-    background:
-        #080b18;
+.feature-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(120,140,255,0.40);
+    box-shadow: 0 15px 35px rgba(70,80,255,0.15);
 }
 
-::-webkit-scrollbar-thumb {
+.feature-icon {
+    font-size: 2rem;
+}
 
-    background:
-        linear-gradient(
-            #5967ff,
-            #8b5cf6
-        );
+.feature-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 8px;
+}
 
-    border-radius:
-        10px;
+.feature-text {
+    color: #aeb8d4;
+    font-size: 0.9rem;
+    margin-top: 5px;
 }
 
 </style>
@@ -626,7 +255,7 @@ div[role="radiogroup"] label:hover {
 
 
 # =========================================================
-# AI CLIENT
+# GROQ AI
 # =========================================================
 
 client = OpenAI(
@@ -636,7 +265,7 @@ client = OpenAI(
 
 
 # =========================================================
-# SUPABASE CLIENT
+# SUPABASE
 # =========================================================
 
 @st.cache_resource
@@ -680,21 +309,13 @@ def update_progress():
         current["study_progress"] + 5
     )
 
-    new_topics = (
-        current["topics_completed"] + 1
-    )
-
-    new_quizzes = (
-        current["quizzes_completed"] + 1
-    )
-
     (
         supabase
         .table("progress")
         .update({
             "study_progress": new_progress,
-            "topics_completed": new_topics,
-            "quizzes_completed": new_quizzes
+            "topics_completed": current["topics_completed"] + 1,
+            "quizzes_completed": current["quizzes_completed"] + 1
         })
         .eq("id", 1)
         .execute()
@@ -751,9 +372,7 @@ def get_study_dates():
 
 def get_current_streak():
 
-    dates = set(
-        get_study_dates()
-    )
+    dates = set(get_study_dates())
 
     today = date.today()
 
@@ -765,10 +384,7 @@ def get_current_streak():
 
         streak += 1
 
-        current_day = (
-            current_day -
-            timedelta(days=1)
-        )
+        current_day = current_day - timedelta(days=1)
 
     return streak
 
@@ -799,9 +415,7 @@ def get_quiz_history():
 def ask_ai(prompt):
 
     response = client.chat.completions.create(
-
         model="openai/gpt-oss-20b",
-
         messages=[
             {
                 "role": "system",
@@ -810,13 +424,8 @@ You are StudySync, an AI study assistant.
 
 Explain concepts in simple student-friendly language.
 
-Use:
-- clear headings
-- bullet points
-- examples
-- exam-oriented explanations
-
-Avoid unnecessarily complicated language.
+Use clear headings, bullet points,
+examples and exam-oriented explanations.
 """
             },
             {
@@ -824,7 +433,6 @@ Avoid unnecessarily complicated language.
                 "content": prompt
             }
         ],
-
         temperature=0.5
     )
 
@@ -836,22 +444,15 @@ Avoid unnecessarily complicated language.
 # =========================================================
 
 if "quiz_questions" not in st.session_state:
-
     st.session_state.quiz_questions = []
 
-
 if "quiz_score" not in st.session_state:
-
     st.session_state.quiz_score = None
 
-
 if "quiz_submitted" not in st.session_state:
-
     st.session_state.quiz_submitted = False
 
-
 if "flashcards" not in st.session_state:
-
     st.session_state.flashcards = []
 
 
@@ -863,12 +464,11 @@ st.sidebar.markdown(
     """
     <div style="
         text-align:center;
-        padding:15px 5px 20px 5px;
+        padding:10px 5px 20px 5px;
     ">
 
         <div style="
             font-size:3rem;
-            animation: float 3s ease-in-out infinite;
         ">
             📚
         </div>
@@ -876,7 +476,7 @@ st.sidebar.markdown(
         <div style="
             font-size:1.7rem;
             font-weight:800;
-            color:white;
+            color:#ffffff;
         ">
             StudySync
         </div>
@@ -890,22 +490,6 @@ st.sidebar.markdown(
         </div>
 
     </div>
-
-    <style>
-
-    @keyframes float {
-
-        0%, 100% {
-            transform:translateY(0);
-        }
-
-        50% {
-            transform:translateY(-6px);
-        }
-
-    }
-
-    </style>
     """,
     unsafe_allow_html=True
 )
@@ -951,7 +535,6 @@ if page == "Home":
 
 
     progress = get_progress()
-
     streak = get_current_streak()
 
 
@@ -1007,9 +590,7 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    📄
-                </div>
+                <div class="feature-icon">📄</div>
 
                 <div class="feature-title">
                     Study Material
@@ -1030,17 +611,15 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    🤖
-                </div>
+                <div class="feature-icon">🤖</div>
 
                 <div class="feature-title">
                     AI Study Assistant
                 </div>
 
                 <div class="feature-text">
-                    Ask questions and get
-                    simple AI-powered explanations.
+                    Ask questions and get simple
+                    AI-powered explanations.
                 </div>
 
             </div>
@@ -1055,9 +634,7 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    📝
-                </div>
+                <div class="feature-icon">📝</div>
 
                 <div class="feature-title">
                     AI Notes
@@ -1078,9 +655,7 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    🧠
-                </div>
+                <div class="feature-icon">🧠</div>
 
                 <div class="feature-title">
                     AI Quiz
@@ -1103,9 +678,7 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    🃏
-                </div>
+                <div class="feature-icon">🃏</div>
 
                 <div class="feature-title">
                     Flashcards
@@ -1126,9 +699,7 @@ if page == "Home":
             """
             <div class="feature-card">
 
-                <div class="feature-icon">
-                    📊
-                </div>
+                <div class="feature-icon">📊</div>
 
                 <div class="feature-title">
                     Progress Tracker
@@ -1166,9 +737,7 @@ elif page == "Study Material":
 
     if uploaded_file:
 
-        reader = PdfReader(
-            uploaded_file
-        )
+        reader = PdfReader(uploaded_file)
 
         text = ""
 
@@ -1183,23 +752,18 @@ elif page == "Study Material":
 
 
         st.success(
-            f"PDF loaded successfully! "
-            f"{len(reader.pages)} pages found."
+            f"PDF loaded successfully! {len(reader.pages)} pages found."
         )
 
 
-        with st.expander(
-            "👀 View extracted text"
-        ):
+        with st.expander("👀 View extracted text"):
 
             st.write(
                 text[:10000]
             )
 
 
-        if st.button(
-            "✨ Generate AI Notes"
-        ):
+        if st.button("✨ Generate AI Notes"):
 
             with st.spinner(
                 "AI is analyzing your material..."
@@ -1210,13 +774,8 @@ elif page == "Study Material":
 Create simple exam-oriented notes
 from the following study material.
 
-Use:
-
-- headings
-- bullet points
-- important definitions
-- examples
-- important exam points
+Use headings, bullet points,
+important definitions and examples.
 
 Material:
 
@@ -1229,9 +788,7 @@ Material:
                 "## 📝 AI Generated Notes"
             )
 
-            st.write(
-                notes
-            )
+            st.write(notes)
 
             save_study_activity()
 
@@ -1242,9 +799,7 @@ Material:
 
 elif page == "AI Study Assistant":
 
-    st.title(
-        "🤖 AI Study Assistant"
-    )
+    st.title("🤖 AI Study Assistant")
 
     st.write(
         "Ask anything related to your studies."
@@ -1257,9 +812,7 @@ elif page == "AI Study Assistant":
     )
 
 
-    if st.button(
-        "🚀 Ask StudySync"
-    ):
+    if st.button("🚀 Ask StudySync"):
 
         if question.strip():
 
@@ -1267,21 +820,14 @@ elif page == "AI Study Assistant":
                 "StudySync is thinking..."
             ):
 
-                answer = ask_ai(
-                    question
-                )
+                answer = ask_ai(question)
 
 
-            st.markdown(
-                "### 💡 Answer"
-            )
+            st.markdown("### 💡 Answer")
 
-            st.write(
-                answer
-            )
+            st.write(answer)
 
             save_study_activity()
-
 
         else:
 
@@ -1291,14 +837,12 @@ elif page == "AI Study Assistant":
 
 
 # =========================================================
-# AI NOTES GENERATOR
+# AI NOTES
 # =========================================================
 
 elif page == "AI Notes Generator":
 
-    st.title(
-        "📝 AI Notes Generator"
-    )
+    st.title("📝 AI Notes Generator")
 
     st.write(
         "Generate easy-to-understand, exam-ready notes."
@@ -1311,9 +855,7 @@ elif page == "AI Notes Generator":
     )
 
 
-    if st.button(
-        "✨ Generate Notes"
-    ):
+    if st.button("✨ Generate Notes"):
 
         if topic.strip():
 
@@ -1341,16 +883,11 @@ Include:
                 )
 
 
-            st.markdown(
-                "## 📚 Your AI Notes"
-            )
+            st.markdown("## 📚 Your AI Notes")
 
-            st.write(
-                notes
-            )
+            st.write(notes)
 
             save_study_activity()
-
 
         else:
 
@@ -1360,14 +897,12 @@ Include:
 
 
 # =========================================================
-# AI QUIZ GENERATOR
+# AI QUIZ
 # =========================================================
 
 elif page == "AI Quiz Generator":
 
-    st.title(
-        "🧠 AI Quiz Generator"
-    )
+    st.title("🧠 AI Quiz Generator")
 
     st.write(
         "Generate an interactive quiz and test your knowledge."
@@ -1389,9 +924,7 @@ elif page == "AI Quiz Generator":
     )
 
 
-    if st.button(
-        "🎯 Generate Quiz"
-    ):
+    if st.button("🎯 Generate Quiz"):
 
         if not topic.strip():
 
@@ -1427,21 +960,17 @@ Format:
 ]
 
 Make exactly {number} questions.
-
 Every question must have exactly
 four options and one correct answer.
 """
 
 
-                response = ask_ai(
-                    prompt
-                )
+                response = ask_ai(prompt)
 
 
                 try:
 
                     cleaned = response.strip()
-
 
                     cleaned = re.sub(
                         r"```json",
@@ -1449,29 +978,19 @@ four options and one correct answer.
                         cleaned
                     )
 
-
                     cleaned = re.sub(
                         r"```",
                         "",
                         cleaned
                     )
 
-
                     start = cleaned.find("[")
 
-                    end = (
-                        cleaned.rfind("]") + 1
-                    )
+                    end = cleaned.rfind("]") + 1
 
+                    cleaned = cleaned[start:end]
 
-                    cleaned = cleaned[
-                        start:end
-                    ]
-
-
-                    questions = json.loads(
-                        cleaned
-                    )
+                    questions = json.loads(cleaned)
 
 
                     st.session_state.quiz_questions = questions
@@ -1493,9 +1012,7 @@ four options and one correct answer.
                     )
 
 
-    questions = (
-        st.session_state.quiz_questions
-    )
+    questions = st.session_state.quiz_questions
 
 
     if questions:
@@ -1507,21 +1024,15 @@ four options and one correct answer.
         )
 
 
-        with st.form(
-            "quiz_form"
-        ):
+        with st.form("quiz_form"):
 
             answers = []
 
 
-            for i, q in enumerate(
-                questions
-            ):
+            for i, q in enumerate(questions):
 
                 st.markdown(
-                    f"""
-                    ### Q{i + 1}. {q["question"]}
-                    """
+                    f"### Q{i + 1}. {q['question']}"
                 )
 
 
@@ -1532,9 +1043,7 @@ four options and one correct answer.
                 )
 
 
-                answers.append(
-                    selected
-                )
+                answers.append(selected)
 
 
             submitted = st.form_submit_button(
@@ -1547,23 +1056,14 @@ four options and one correct answer.
             score = 0
 
 
-            for i, q in enumerate(
-                questions
-            ):
+            for i, q in enumerate(questions):
 
-                if (
-                    answers[i]
-                    ==
-                    q["answer"]
-                ):
+                if answers[i] == q["answer"]:
 
                     score += 1
 
 
-            total = len(
-                questions
-            )
-
+            total = len(questions)
 
             percentage = round(
                 (score / total) * 100
@@ -1589,8 +1089,7 @@ four options and one correct answer.
 
 
             st.success(
-                f"🎉 Quiz submitted! "
-                f"Score: {score}/{total}"
+                f"🎉 Quiz submitted! Score: {score}/{total}"
             )
 
 
@@ -1604,9 +1103,7 @@ four options and one correct answer.
             )
 
 
-        if (
-            st.session_state.quiz_submitted
-        ):
+        if st.session_state.quiz_submitted:
 
             st.divider()
 
@@ -1615,18 +1112,14 @@ four options and one correct answer.
             )
 
 
-            for i, q in enumerate(
-                questions
-            ):
+            for i, q in enumerate(questions):
 
                 st.write(
-                    f"**Q{i + 1}:** "
-                    f"{q['question']}"
+                    f"**Q{i + 1}:** {q['question']}"
                 )
 
                 st.success(
-                    f"Correct Answer: "
-                    f"{q['answer']}"
+                    f"Correct Answer: {q['answer']}"
                 )
 
 
@@ -1636,9 +1129,7 @@ four options and one correct answer.
 
 elif page == "Flashcards":
 
-    st.title(
-        "🃏 AI Flashcards"
-    )
+    st.title("🃏 AI Flashcards")
 
     st.write(
         "Generate quick revision cards for any topic."
@@ -1659,9 +1150,7 @@ elif page == "Flashcards":
     )
 
 
-    if st.button(
-        "✨ Generate Flashcards"
-    ):
+    if st.button("✨ Generate Flashcards"):
 
         if not topic.strip():
 
@@ -1694,15 +1183,12 @@ Make exactly {number} cards.
 """
 
 
-                response = ask_ai(
-                    prompt
-                )
+                response = ask_ai(prompt)
 
 
                 try:
 
                     cleaned = response.strip()
-
 
                     cleaned = re.sub(
                         r"```json",
@@ -1710,29 +1196,19 @@ Make exactly {number} cards.
                         cleaned
                     )
 
-
                     cleaned = re.sub(
                         r"```",
                         "",
                         cleaned
                     )
 
-
                     start = cleaned.find("[")
 
-                    end = (
-                        cleaned.rfind("]") + 1
-                    )
+                    end = cleaned.rfind("]") + 1
 
+                    cleaned = cleaned[start:end]
 
-                    cleaned = cleaned[
-                        start:end
-                    ]
-
-
-                    cards = json.loads(
-                        cleaned
-                    )
+                    cards = json.loads(cleaned)
 
 
                     st.session_state.flashcards = cards
@@ -1785,9 +1261,7 @@ Make exactly {number} cards.
 
 elif page == "Progress Tracker":
 
-    st.title(
-        "📊 Progress Tracker"
-    )
+    st.title("📊 Progress Tracker")
 
     st.write(
         "Track your learning journey with StudySync."
@@ -1835,16 +1309,13 @@ elif page == "Progress Tracker":
 
 
     st.metric(
-        "Days",
-        streak
+        "Study Streak",
+        f"{streak} Days"
     )
 
 
     st.progress(
-        min(
-            streak / 30,
-            1.0
-        )
+        min(streak / 30, 1.0)
     )
 
 
@@ -1863,11 +1334,6 @@ elif page == "Progress Tracker":
 
         for quiz in history:
 
-            percentage = quiz[
-                "percentage"
-            ]
-
-
             st.markdown(
                 f"""
                 <div class="feature-card">
@@ -1883,10 +1349,9 @@ elif page == "Progress Tracker":
                         color:#aeb8d4;
                         margin-top:6px;
                     ">
-                        Score:
-                        {quiz["score"]}/{quiz["total"]}
+                        Score: {quiz["score"]}/{quiz["total"]}
                         &nbsp; • &nbsp;
-                        {percentage}%
+                        {quiz["percentage"]}%
                         &nbsp; • &nbsp;
                         {quiz["date"]}
                     </div>
@@ -1916,9 +1381,7 @@ st.markdown(
         padding:35px 0 10px 0;
         font-size:0.8rem;
     ">
-
         StudySync • Learn Smarter 🚀
-
     </div>
     """,
     unsafe_allow_html=True
