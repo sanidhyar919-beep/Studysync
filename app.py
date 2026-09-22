@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from openai import OpenAI
 from pypdf import PdfReader
 from supabase import create_client
@@ -41,67 +42,49 @@ if "flashcards" not in st.session_state:
 
 
 # =========================================================
-# GLOBAL CSS
+# NORMAL APP CSS
 # =========================================================
 
 st.markdown(
     """
     <style>
 
-    /* =========================================
-       MAIN APP
-       ========================================= */
-
     .stApp {
         background:
         radial-gradient(
-            circle at 15% 10%,
-            rgba(92, 76, 255, 0.14),
-            transparent 28%
+            circle at 10% 10%,
+            rgba(88, 80, 255, 0.14),
+            transparent 30%
         ),
         radial-gradient(
-            circle at 85% 15%,
+            circle at 90% 20%,
             rgba(0, 200, 255, 0.08),
-            transparent 25%
+            transparent 28%
         ),
         #070a14;
     }
 
     .main .block-container {
+        max-width: 1250px;
         padding-top: 2rem;
         padding-bottom: 3rem;
-        max-width: 1250px;
     }
-
-
-    /* =========================================
-       SIDEBAR
-       ========================================= */
 
     section[data-testid="stSidebar"] {
         background: #080b17;
         border-right: 1px solid rgba(255,255,255,0.07);
     }
 
-
-    /* =========================================
-       HEADINGS
-       ========================================= */
-
     h1 {
-        color: white !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
         letter-spacing: -1px;
     }
 
-    h2, h3 {
-        color: white !important;
+    h2,
+    h3 {
+        color: #ffffff !important;
     }
-
-
-    /* =========================================
-       METRICS
-       ========================================= */
 
     div[data-testid="stMetric"] {
         background: rgba(255,255,255,0.045);
@@ -109,12 +92,11 @@ st.markdown(
         border-radius: 18px;
         padding: 20px;
         transition: all 0.3s ease;
-        backdrop-filter: blur(12px);
     }
 
     div[data-testid="stMetric"]:hover {
         transform: translateY(-5px);
-        border-color: rgba(100,120,255,0.35);
+        border-color: rgba(100,120,255,0.40);
         box-shadow:
             0 12px 35px rgba(60,70,255,0.15);
     }
@@ -124,21 +106,16 @@ st.markdown(
     }
 
     div[data-testid="stMetricValue"] {
-        color: white !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
     }
-
-
-    /* =========================================
-       BUTTONS
-       ========================================= */
 
     .stButton > button {
         width: 100%;
         border: none;
         border-radius: 12px;
         padding: 0.7rem 1rem;
-        color: white;
+        color: #ffffff;
         font-weight: 700;
         background:
             linear-gradient(
@@ -155,23 +132,13 @@ st.markdown(
             0 10px 30px rgba(88,101,242,0.30);
     }
 
-
-    /* =========================================
-       INPUTS
-       ========================================= */
-
     .stTextInput input,
     .stTextArea textarea {
         background: rgba(255,255,255,0.045) !important;
-        color: white !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
         border-radius: 12px !important;
     }
-
-
-    /* =========================================
-       EXPANDERS
-       ========================================= */
 
     div[data-testid="stExpander"] {
         background: rgba(255,255,255,0.035);
@@ -179,25 +146,15 @@ st.markdown(
         border-radius: 14px;
     }
 
-
-    /* =========================================
-       PROGRESS
-       ========================================= */
-
     div[data-testid="stProgressBar"] > div > div {
         background:
             linear-gradient(
                 90deg,
                 #5865f2,
                 #8b5cf6,
-                #4fdcff
+                #55d6ff
             );
     }
-
-
-    /* =========================================
-       HOME HERO
-       ========================================= */
 
     .home-title {
         font-size: 3rem;
@@ -221,196 +178,6 @@ st.markdown(
         margin-bottom: 30px;
     }
 
-
-    /* =========================================
-       FEATURE CARDS
-       ========================================= */
-
-    .feature-card {
-        background: rgba(255,255,255,0.035);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-        border-color: rgba(110,120,255,0.35);
-        box-shadow:
-            0 12px 35px rgba(70,80,255,0.12);
-    }
-
-
-    /* =========================================
-       SPLASH SCREEN
-       ========================================= */
-
-    .splash-wrapper {
-        position: fixed;
-        inset: 0;
-        z-index: 999999;
-        background:
-            radial-gradient(
-                circle at center,
-                #151a3b 0%,
-                #090c1b 45%,
-                #05070f 100%
-            );
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        animation:
-            splashExit 0.9s ease-in-out 3.2s forwards;
-
-        pointer-events: none;
-    }
-
-
-    .splash-content {
-        text-align: center;
-        animation:
-            splashEnter 1.4s cubic-bezier(.16,1,.3,1);
-    }
-
-
-    .splash-icon {
-        font-size: 5rem;
-        margin-bottom: 15px;
-
-        animation:
-            iconFloat 2.5s ease-in-out infinite;
-    }
-
-
-    .splash-title {
-        font-size: 4.2rem;
-        font-weight: 900;
-        letter-spacing: -2px;
-
-        background:
-            linear-gradient(
-                90deg,
-                #ffffff,
-                #a3adff,
-                #58d9ff
-            );
-
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-
-    .splash-subtitle {
-        color: #8994b2;
-        font-size: 1rem;
-        margin-top: 10px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-
-        animation:
-            subtitleFade 1.5s ease 0.5s both;
-    }
-
-
-    .splash-line {
-        width: 0;
-        height: 2px;
-        margin: 25px auto 0;
-
-        background:
-            linear-gradient(
-                90deg,
-                #5865f2,
-                #8b5cf6,
-                #55d6ff
-            );
-
-        border-radius: 10px;
-
-        animation:
-            lineGrow 1.5s ease 0.8s forwards;
-    }
-
-
-    @keyframes splashEnter {
-
-        0% {
-            opacity: 0;
-            transform: translateY(35px) scale(0.92);
-        }
-
-        60% {
-            opacity: 1;
-        }
-
-        100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-
-    }
-
-
-    @keyframes iconFloat {
-
-        0%, 100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-10px);
-        }
-
-    }
-
-
-    @keyframes subtitleFade {
-
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-    }
-
-
-    @keyframes lineGrow {
-
-        from {
-            width: 0;
-        }
-
-        to {
-            width: 180px;
-        }
-
-    }
-
-
-    @keyframes splashExit {
-
-        0% {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        100% {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-    }
-
-
     </style>
     """,
     unsafe_allow_html=True
@@ -418,39 +185,271 @@ st.markdown(
 
 
 # =========================================================
-# SPLASH SCREEN
+# STUDYSYNC INTRO / SPLASH SCREEN
 # =========================================================
 
 if not st.session_state.intro_done:
 
-    st.markdown(
+    components.html(
         """
-        <div class="splash-wrapper">
+        <!DOCTYPE html>
 
-            <div class="splash-content">
+        <html>
 
-                <div class="splash-icon">
+        <head>
+
+        <style>
+
+        html,
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+        }
+
+        body {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #171c40 0%,
+                    #090c1b 50%,
+                    #05070f 100%
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+        }
+
+        .intro {
+
+            text-align: center;
+
+            animation:
+                introIn
+                1.2s
+                cubic-bezier(.16,1,.3,1)
+                forwards;
+
+        }
+
+        .logo {
+
+            font-size: 72px;
+
+            margin-bottom: 10px;
+
+            animation:
+                floating
+                2s
+                ease-in-out
+                infinite;
+
+        }
+
+        .title {
+
+            font-size: 58px;
+
+            font-weight: 900;
+
+            letter-spacing: -2px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff,
+                    #a5b0ff,
+                    #55dfff
+                );
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+
+        }
+
+        .subtitle {
+
+            margin-top: 14px;
+
+            color: #8995b5;
+
+            font-size: 14px;
+
+            letter-spacing: 4px;
+
+            text-transform: uppercase;
+
+            opacity: 0;
+
+            animation:
+                subtitleIn
+                1s
+                ease
+                0.5s
+                forwards;
+
+        }
+
+        .line {
+
+            width: 0;
+
+            height: 2px;
+
+            margin: 25px auto 0;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #5865f2,
+                    #8b5cf6,
+                    #55dfff
+                );
+
+            animation:
+                lineGrow
+                1.2s
+                ease
+                0.8s
+                forwards;
+
+        }
+
+        @keyframes introIn {
+
+            0% {
+
+                opacity: 0;
+
+                transform:
+                    translateY(35px)
+                    scale(0.85);
+
+            }
+
+            100% {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0)
+                    scale(1);
+
+            }
+
+        }
+
+        @keyframes subtitleIn {
+
+            0% {
+
+                opacity: 0;
+
+                transform:
+                    translateY(12px);
+
+            }
+
+            100% {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+        @keyframes lineGrow {
+
+            0% {
+
+                width: 0;
+
+            }
+
+            100% {
+
+                width: 180px;
+
+            }
+
+        }
+
+        @keyframes floating {
+
+            0%,
+            100% {
+
+                transform:
+                    translateY(0);
+
+            }
+
+            50% {
+
+                transform:
+                    translateY(-10px);
+
+            }
+
+        }
+
+        </style>
+
+        </head>
+
+        <body>
+
+            <div class="intro">
+
+                <div class="logo">
                     📚
                 </div>
 
-                <div class="splash-title">
+                <div class="title">
                     StudySync
                 </div>
 
-                <div class="splash-subtitle">
+                <div class="subtitle">
                     AI Powered Study Companion
                 </div>
 
-                <div class="splash-line"></div>
+                <div class="line"></div>
 
             </div>
 
-        </div>
+        </body>
+
+        </html>
         """,
-        unsafe_allow_html=True
+        height=600,
+        scrolling=False
     )
 
-    time.sleep(4)
+    time.sleep(3.5)
 
     st.session_state.intro_done = True
 
@@ -590,7 +589,10 @@ def get_quiz_history():
         .select(
             "topic, score, total, percentage, date"
         )
-        .order("id", desc=True)
+        .order(
+            "id",
+            desc=True
+        )
         .limit(10)
         .execute()
     )
@@ -665,7 +667,9 @@ page = st.sidebar.radio(
 if page == "🏠 Home":
 
     st.markdown(
-        '<div class="home-title">Welcome to StudySync 🚀</div>',
+        '<div class="home-title">'
+        'Welcome to StudySync 🚀'
+        '</div>',
         unsafe_allow_html=True
     )
 
@@ -816,11 +820,17 @@ elif page == "📄 Study Material":
             f"{len(reader.pages)} pages."
         )
 
-        with st.expander("👀 View extracted text"):
+        with st.expander(
+            "👀 View extracted text"
+        ):
 
-            st.write(text[:10000])
+            st.write(
+                text[:10000]
+            )
 
-        if st.button("✨ Generate AI Notes"):
+        if st.button(
+            "✨ Generate AI Notes"
+        ):
 
             with st.spinner(
                 "AI is analyzing your PDF..."
@@ -843,7 +853,9 @@ elif page == "📄 Study Material":
                     """
                 )
 
-            st.subheader("📝 AI Generated Notes")
+            st.subheader(
+                "📝 AI Generated Notes"
+            )
 
             st.write(notes)
 
@@ -856,7 +868,9 @@ elif page == "📄 Study Material":
 
 elif page == "🤖 AI Study Assistant":
 
-    st.title("🤖 AI Study Assistant")
+    st.title(
+        "🤖 AI Study Assistant"
+    )
 
     st.write(
         "Ask anything related to your studies."
@@ -868,7 +882,9 @@ elif page == "🤖 AI Study Assistant":
         "Example: Explain pointers in C in simple language."
     )
 
-    if st.button("🚀 Ask StudySync"):
+    if st.button(
+        "🚀 Ask StudySync"
+    ):
 
         if question.strip():
 
@@ -876,9 +892,13 @@ elif page == "🤖 AI Study Assistant":
                 "StudySync is thinking..."
             ):
 
-                answer = ask_ai(question)
+                answer = ask_ai(
+                    question
+                )
 
-            st.subheader("💡 Answer")
+            st.subheader(
+                "💡 Answer"
+            )
 
             st.write(answer)
 
@@ -892,12 +912,14 @@ elif page == "🤖 AI Study Assistant":
 
 
 # =========================================================
-# AI NOTES
+# AI NOTES GENERATOR
 # =========================================================
 
 elif page == "📝 AI Notes Generator":
 
-    st.title("📝 AI Notes Generator")
+    st.title(
+        "📝 AI Notes Generator"
+    )
 
     st.write(
         "Generate easy and exam-ready notes."
@@ -905,10 +927,13 @@ elif page == "📝 AI Notes Generator":
 
     topic = st.text_input(
         "📚 Enter Topic",
-        placeholder="Example: Operating System"
+        placeholder=
+        "Example: Operating System"
     )
 
-    if st.button("✨ Generate Notes"):
+    if st.button(
+        "✨ Generate Notes"
+    ):
 
         if topic.strip():
 
@@ -935,7 +960,9 @@ elif page == "📝 AI Notes Generator":
                     """
                 )
 
-            st.subheader("📚 Your Notes")
+            st.subheader(
+                "📚 Your Notes"
+            )
 
             st.write(notes)
 
@@ -949,12 +976,14 @@ elif page == "📝 AI Notes Generator":
 
 
 # =========================================================
-# QUIZ
+# AI QUIZ GENERATOR
 # =========================================================
 
 elif page == "🧠 AI Quiz Generator":
 
-    st.title("🧠 AI Quiz Generator")
+    st.title(
+        "🧠 AI Quiz Generator"
+    )
 
     st.write(
         "Generate a quiz and test your knowledge."
@@ -962,7 +991,8 @@ elif page == "🧠 AI Quiz Generator":
 
     topic = st.text_input(
         "📚 Quiz Topic",
-        placeholder="Example: C Programming"
+        placeholder=
+        "Example: C Programming"
     )
 
     number = st.slider(
@@ -972,7 +1002,9 @@ elif page == "🧠 AI Quiz Generator":
         5
     )
 
-    if st.button("🎯 Generate Quiz"):
+    if st.button(
+        "🎯 Generate Quiz"
+    ):
 
         if not topic.strip():
 
@@ -1010,7 +1042,9 @@ elif page == "🧠 AI Quiz Generator":
                 Make exactly {number} questions.
                 """
 
-                response = ask_ai(prompt)
+                response = ask_ai(
+                    prompt
+                )
 
             try:
 
@@ -1032,9 +1066,13 @@ elif page == "🧠 AI Quiz Generator":
 
                 end = cleaned.rfind("]") + 1
 
-                cleaned = cleaned[start:end]
+                cleaned = cleaned[
+                    start:end
+                ]
 
-                questions = json.loads(cleaned)
+                questions = json.loads(
+                    cleaned
+                )
 
                 st.session_state.quiz_questions = questions
 
@@ -1063,11 +1101,15 @@ elif page == "🧠 AI Quiz Generator":
             "📝 Answer the Questions"
         )
 
-        with st.form("quiz_form"):
+        with st.form(
+            "quiz_form"
+        ):
 
             answers = []
 
-            for i, question in enumerate(questions):
+            for i, question in enumerate(
+                questions
+            ):
 
                 st.markdown(
                     f"### Q{i + 1}. "
@@ -1080,7 +1122,9 @@ elif page == "🧠 AI Quiz Generator":
                     key=f"question_{i}"
                 )
 
-                answers.append(selected)
+                answers.append(
+                    selected
+                )
 
             submitted = st.form_submit_button(
                 "✅ Submit Quiz"
@@ -1090,13 +1134,21 @@ elif page == "🧠 AI Quiz Generator":
 
             score = 0
 
-            for i, question in enumerate(questions):
+            for i, question in enumerate(
+                questions
+            ):
 
-                if answers[i] == question["answer"]:
+                if (
+                    answers[i]
+                    ==
+                    question["answer"]
+                ):
 
                     score += 1
 
-            total = len(questions)
+            total = len(
+                questions
+            )
 
             percentage = round(
                 score / total * 100
@@ -1118,7 +1170,8 @@ elif page == "🧠 AI Quiz Generator":
             save_study_activity()
 
             st.success(
-                f"🎉 Your score: {score}/{total}"
+                f"🎉 Your score: "
+                f"{score}/{total}"
             )
 
             st.progress(
@@ -1137,7 +1190,9 @@ elif page == "🧠 AI Quiz Generator":
                 "📋 Answer Review"
             )
 
-            for i, question in enumerate(questions):
+            for i, question in enumerate(
+                questions
+            ):
 
                 st.write(
                     f"**Q{i + 1}.** "
@@ -1156,7 +1211,9 @@ elif page == "🧠 AI Quiz Generator":
 
 elif page == "🃏 Flashcards":
 
-    st.title("🃏 AI Flashcards")
+    st.title(
+        "🃏 AI Flashcards"
+    )
 
     st.write(
         "Create quick revision cards using AI."
@@ -1164,7 +1221,8 @@ elif page == "🃏 Flashcards":
 
     topic = st.text_input(
         "📚 Flashcard Topic",
-        placeholder="Example: Data Structures"
+        placeholder=
+        "Example: Data Structures"
     )
 
     number = st.slider(
@@ -1174,7 +1232,9 @@ elif page == "🃏 Flashcards":
         5
     )
 
-    if st.button("✨ Generate Flashcards"):
+    if st.button(
+        "✨ Generate Flashcards"
+    ):
 
         if not topic.strip():
 
@@ -1206,7 +1266,9 @@ elif page == "🃏 Flashcards":
                 Make exactly {number} cards.
                 """
 
-                response = ask_ai(prompt)
+                response = ask_ai(
+                    prompt
+                )
 
             try:
 
@@ -1228,9 +1290,13 @@ elif page == "🃏 Flashcards":
 
                 end = cleaned.rfind("]") + 1
 
-                cleaned = cleaned[start:end]
+                cleaned = cleaned[
+                    start:end
+                ]
 
-                cards = json.loads(cleaned)
+                cards = json.loads(
+                    cleaned
+                )
 
                 st.session_state.flashcards = cards
 
@@ -1269,12 +1335,14 @@ elif page == "🃏 Flashcards":
 
 
 # =========================================================
-# PROGRESS
+# PROGRESS TRACKER
 # =========================================================
 
 elif page == "📊 Progress Tracker":
 
-    st.title("📊 Progress Tracker")
+    st.title(
+        "📊 Progress Tracker"
+    )
 
     st.write(
         "Track your StudySync learning journey."
@@ -1309,7 +1377,9 @@ elif page == "📊 Progress Tracker":
 
     st.divider()
 
-    st.subheader("🔥 Current Streak")
+    st.subheader(
+        "🔥 Current Streak"
+    )
 
     st.metric(
         "Study Streak",
@@ -1317,7 +1387,10 @@ elif page == "📊 Progress Tracker":
     )
 
     st.progress(
-        min(streak / 30, 1.0)
+        min(
+            streak / 30,
+            1.0
+        )
     )
 
     st.divider()
@@ -1336,11 +1409,14 @@ elif page == "📊 Progress Tracker":
                 f"""
                 🧠 **{quiz["topic"]}**
 
-                Score: {quiz["score"]}/{quiz["total"]}
+                Score:
+                {quiz["score"]}/{quiz["total"]}
 
-                Percentage: {quiz["percentage"]}%
+                Percentage:
+                {quiz["percentage"]}%
 
-                Date: {quiz["date"]}
+                Date:
+                {quiz["date"]}
                 """
             )
 
