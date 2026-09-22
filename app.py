@@ -1,6 +1,7 @@
 import streamlit as st
 from pypdf import PdfReader
 from openai import OpenAI
+from datetime import date, timedelta
 
 
 # =========================================================
@@ -35,6 +36,9 @@ if "topics_completed" not in st.session_state:
 
 if "study_progress" not in st.session_state:
     st.session_state.study_progress = 0
+
+if "study_dates" not in st.session_state:
+    st.session_state.study_dates = []
 
 if "flashcards" not in st.session_state:
     st.session_state.flashcards = []
@@ -75,7 +79,7 @@ def ask_ai(prompt):
 
 
 # =========================================================
-# HOME PAGE
+# HOME
 # =========================================================
 
 if st.session_state.page == "Home":
@@ -184,21 +188,32 @@ elif st.session_state.page == "Study Material":
                 if page_text:
                     text += page_text + "\n"
 
-            st.success("PDF uploaded successfully!")
+            st.success(
+                "PDF uploaded successfully!"
+            )
 
-            with st.expander("📖 Extracted Text"):
+            with st.expander(
+                "📖 Extracted Text"
+            ):
 
-                st.write(text[:12000])
+                st.write(
+                    text[:12000]
+                )
 
-            if st.button("🤖 Generate AI Notes"):
+            if st.button(
+                "🤖 Generate AI Notes"
+            ):
 
-                with st.spinner("Generating notes..."):
+                with st.spinner(
+                    "Generating notes..."
+                ):
 
                     prompt = f"""
-Create simple and clear study notes from the following
-study material.
+Create simple and clear study notes from the
+following study material.
 
 Use:
+
 - Important headings
 - Bullet points
 - Definitions
@@ -212,7 +227,9 @@ Study Material:
 
                     notes = ask_ai(prompt)
 
-                st.subheader("📚 AI Generated Notes")
+                st.subheader(
+                    "📚 AI Generated Notes"
+                )
 
                 st.write(notes)
 
@@ -250,7 +267,9 @@ elif st.session_state.page == "AI Study Assistant":
 
         else:
 
-            with st.spinner("AI is thinking..."):
+            with st.spinner(
+                "AI is thinking..."
+            ):
 
                 prompt = f"""
 You are a helpful college study assistant.
@@ -261,12 +280,15 @@ easy-to-understand language.
 Use examples wherever useful.
 
 Question:
+
 {question}
 """
 
                 answer = ask_ai(prompt)
 
-            st.subheader("💡 AI Answer")
+            st.subheader(
+                "💡 AI Answer"
+            )
 
             st.write(answer)
 
@@ -288,7 +310,9 @@ elif st.session_state.page == "AI Notes Generator":
         placeholder="Example: Machine Learning"
     )
 
-    if st.button("Generate Notes"):
+    if st.button(
+        "Generate Notes"
+    ):
 
         if topic.strip() == "":
 
@@ -298,11 +322,13 @@ elif st.session_state.page == "AI Notes Generator":
 
         else:
 
-            with st.spinner("Generating notes..."):
+            with st.spinner(
+                "Generating notes..."
+            ):
 
                 prompt = f"""
-Create detailed but easy-to-understand college notes
-on the topic:
+Create detailed but easy-to-understand
+college notes on:
 
 {topic}
 
@@ -321,7 +347,9 @@ Use simple language.
 
                 notes = ask_ai(prompt)
 
-            st.subheader("📚 Generated Notes")
+            st.subheader(
+                "📚 Generated Notes"
+            )
 
             st.write(notes)
 
@@ -352,7 +380,9 @@ elif st.session_state.page == "AI Quiz Generator":
     # GENERATE QUIZ
     # -----------------------------------------------------
 
-    if st.button("Generate Quiz"):
+    if st.button(
+        "Generate Quiz"
+    ):
 
         if topic.strip() == "":
 
@@ -362,13 +392,16 @@ elif st.session_state.page == "AI Quiz Generator":
 
         else:
 
-            with st.spinner("Generating quiz..."):
+            with st.spinner(
+                "Generating quiz..."
+            ):
 
                 prompt = f"""
 Create exactly {number_of_questions}
 multiple-choice questions for college students.
 
 Topic:
+
 {topic}
 
 Use EXACTLY this format:
@@ -381,17 +414,20 @@ D: option D
 ANSWER: A
 
 The ANSWER must contain only:
+
 A, B, C or D.
 
 Make the questions educational,
 clear and different from each other.
 """
 
-                quiz_text = ask_ai(prompt)
+                quiz_text = ask_ai(
+                    prompt
+                )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # PARSE QUIZ
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             lines = quiz_text.splitlines()
 
@@ -403,11 +439,17 @@ clear and different from each other.
 
                 line = line.strip()
 
-                if line.startswith("QUESTION:"):
+                if line.startswith(
+                    "QUESTION:"
+                ):
 
-                    if current.get("question"):
+                    if current.get(
+                        "question"
+                    ):
 
-                        questions.append(current)
+                        questions.append(
+                            current
+                        )
 
                     current = {
                         "question":
@@ -417,23 +459,41 @@ clear and different from each other.
                         ).strip()
                     }
 
-                elif line.startswith("A:"):
+                elif line.startswith(
+                    "A:"
+                ):
 
-                    current["A"] = line[2:].strip()
+                    current["A"] = (
+                        line[2:].strip()
+                    )
 
-                elif line.startswith("B:"):
+                elif line.startswith(
+                    "B:"
+                ):
 
-                    current["B"] = line[2:].strip()
+                    current["B"] = (
+                        line[2:].strip()
+                    )
 
-                elif line.startswith("C:"):
+                elif line.startswith(
+                    "C:"
+                ):
 
-                    current["C"] = line[2:].strip()
+                    current["C"] = (
+                        line[2:].strip()
+                    )
 
-                elif line.startswith("D:"):
+                elif line.startswith(
+                    "D:"
+                ):
 
-                    current["D"] = line[2:].strip()
+                    current["D"] = (
+                        line[2:].strip()
+                    )
 
-                elif line.startswith("ANSWER:"):
+                elif line.startswith(
+                    "ANSWER:"
+                ):
 
                     current["answer"] = (
                         line.replace(
@@ -444,13 +504,17 @@ clear and different from each other.
                         .upper()
                     )
 
-            if current.get("question"):
+            if current.get(
+                "question"
+            ):
 
-                questions.append(current)
+                questions.append(
+                    current
+                )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # VALID QUESTIONS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             valid_questions = []
 
@@ -463,14 +527,21 @@ clear and different from each other.
                     and q.get("C")
                     and q.get("D")
                     and q.get("answer")
-                    in ["A", "B", "C", "D"]
+                    in [
+                        "A",
+                        "B",
+                        "C",
+                        "D"
+                    ]
                 ):
 
-                    valid_questions.append(q)
+                    valid_questions.append(
+                        q
+                    )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # RETRY IF QUESTIONS ARE MISSING
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             attempts = 0
 
@@ -522,9 +593,13 @@ ANSWER must only be A, B, C or D.
 
                     line = line.strip()
 
-                    if line.startswith("QUESTION:"):
+                    if line.startswith(
+                        "QUESTION:"
+                    ):
 
-                        if current.get("question"):
+                        if current.get(
+                            "question"
+                        ):
 
                             questions.append(
                                 current
@@ -538,31 +613,41 @@ ANSWER must only be A, B, C or D.
                             ).strip()
                         }
 
-                    elif line.startswith("A:"):
+                    elif line.startswith(
+                        "A:"
+                    ):
 
                         current["A"] = (
                             line[2:].strip()
                         )
 
-                    elif line.startswith("B:"):
+                    elif line.startswith(
+                        "B:"
+                    ):
 
                         current["B"] = (
                             line[2:].strip()
                         )
 
-                    elif line.startswith("C:"):
+                    elif line.startswith(
+                        "C:"
+                    ):
 
                         current["C"] = (
                             line[2:].strip()
                         )
 
-                    elif line.startswith("D:"):
+                    elif line.startswith(
+                        "D:"
+                    ):
 
                         current["D"] = (
                             line[2:].strip()
                         )
 
-                    elif line.startswith("ANSWER:"):
+                    elif line.startswith(
+                        "ANSWER:"
+                    ):
 
                         current["answer"] = (
                             line.replace(
@@ -573,9 +658,13 @@ ANSWER must only be A, B, C or D.
                             .upper()
                         )
 
-                if current.get("question"):
+                if current.get(
+                    "question"
+                ):
 
-                    questions.append(current)
+                    questions.append(
+                        current
+                    )
 
                 valid_questions = []
 
@@ -588,14 +677,21 @@ ANSWER must only be A, B, C or D.
                         and q.get("C")
                         and q.get("D")
                         and q.get("answer")
-                        in ["A", "B", "C", "D"]
+                        in [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                        ]
                     ):
 
-                        valid_questions.append(q)
+                        valid_questions.append(
+                            q
+                        )
 
-            # ---------------------------------------------
-            # SAVE QUIZ IN SESSION
-            # ---------------------------------------------
+            # -------------------------------------------------
+            # SAVE QUIZ
+            # -------------------------------------------------
 
             st.session_state.quiz_questions = (
                 valid_questions[
@@ -604,6 +700,13 @@ ANSWER must only be A, B, C or D.
             )
 
             st.session_state.quiz_score = None
+
+            if not st.session_state.quiz_questions:
+
+                st.error(
+                    "AI could not generate a valid quiz. "
+                    "Please try again."
+                )
 
     # -----------------------------------------------------
     # DISPLAY QUIZ
@@ -619,10 +722,17 @@ ANSWER must only be A, B, C or D.
             f"Generated {len(questions)} questions."
         )
 
-        # FORM
-        with st.form("quiz_form"):
+        # -------------------------------------------------
+        # QUIZ FORM
+        # -------------------------------------------------
 
-            for i, q in enumerate(questions):
+        with st.form(
+            "quiz_form"
+        ):
+
+            for i, q in enumerate(
+                questions
+            ):
 
                 st.markdown(
                     f"### Question {i + 1}"
@@ -671,19 +781,24 @@ ANSWER must only be A, B, C or D.
                     q["answer"]
                 ]
 
-                if selected == correct_option:
+                if (
+                    selected
+                    == correct_option
+                ):
 
                     score += 1
 
-            total = len(questions)
+            total = len(
+                questions
+            )
 
             percentage = (
                 score / total
             ) * 100
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # UPDATE PROGRESS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             st.session_state.quizzes_completed += 1
 
@@ -693,6 +808,25 @@ ANSWER must only be A, B, C or D.
                 100,
                 st.session_state.study_progress + 5
             )
+
+            # -------------------------------------------------
+            # SAVE TODAY'S STUDY ACTIVITY
+            # -------------------------------------------------
+
+            today = str(
+                date.today()
+            )
+
+            if (
+                today
+                not in st.session_state.study_dates
+            ):
+
+                st.session_state.study_dates.append(
+                    today
+                )
+
+            # Save score
 
             st.session_state.quiz_score = (
                 score,
@@ -704,7 +838,10 @@ ANSWER must only be A, B, C or D.
         # QUIZ RESULT
         # -------------------------------------------------
 
-        if st.session_state.quiz_score is not None:
+        if (
+            st.session_state.quiz_score
+            is not None
+        ):
 
             score, total, percentage = (
                 st.session_state.quiz_score
@@ -726,7 +863,8 @@ ANSWER must only be A, B, C or D.
             )
 
             st.write(
-                f"Percentage: {percentage:.1f}%"
+                f"Percentage: "
+                f"{percentage:.1f}%"
             )
 
             if percentage >= 80:
@@ -747,9 +885,9 @@ ANSWER must only be A, B, C or D.
                     "Keep studying and try again. 💪"
                 )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # ANSWER REVIEW
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             st.subheader(
                 "📋 Answer Review"
@@ -769,7 +907,10 @@ ANSWER must only be A, B, C or D.
                     q["answer"]
                 ]
 
-                if selected == correct_option:
+                if (
+                    selected
+                    == correct_option
+                ):
 
                     st.success(
                         f"Question {i + 1}: "
@@ -808,7 +949,9 @@ elif st.session_state.page == "Flashcards":
         [5, 10]
     )
 
-    if st.button("Generate Flashcards"):
+    if st.button(
+        "Generate Flashcards"
+    ):
 
         if topic.strip() == "":
 
@@ -841,10 +984,6 @@ for college students.
                     prompt
                 )
 
-            # ---------------------------------------------
-            # PARSE FLASHCARDS
-            # ---------------------------------------------
-
             lines = (
                 flashcard_text.splitlines()
             )
@@ -857,7 +996,9 @@ for college students.
 
                 line = line.strip()
 
-                if line.startswith("Q:"):
+                if line.startswith(
+                    "Q:"
+                ):
 
                     current_question = (
                         line[2:].strip()
@@ -882,12 +1023,14 @@ for college students.
                     current_question = None
 
             st.session_state.flashcards = (
-                cards[:number_of_cards]
+                cards[
+                    :number_of_cards
+                ]
             )
 
-    # ---------------------------------------------
+    # -----------------------------------------------------
     # DISPLAY FLASHCARDS
-    # ---------------------------------------------
+    # -----------------------------------------------------
 
     if st.session_state.flashcards:
 
@@ -918,7 +1061,9 @@ for college students.
 
 elif st.session_state.page == "Progress Tracker":
 
-    st.title("📊 Progress Tracker")
+    st.title(
+        "📊 Progress Tracker"
+    )
 
     st.write(
         "Track your study progress."
@@ -932,9 +1077,9 @@ elif st.session_state.page == "Progress Tracker":
 
     st.divider()
 
-    # ---------------------------------------------
+    # -----------------------------------------------------
     # STUDY PROGRESS
-    # ---------------------------------------------
+    # -----------------------------------------------------
 
     progress = (
         st.session_state.study_progress
@@ -953,9 +1098,9 @@ elif st.session_state.page == "Progress Tracker":
         f"{progress}%"
     )
 
-    # ---------------------------------------------
-    # STATISTICS
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # TOPICS AND QUIZZES
+    # -----------------------------------------------------
 
     col1, col2 = st.columns(2)
 
@@ -973,14 +1118,39 @@ elif st.session_state.page == "Progress Tracker":
             st.session_state.quizzes_completed
         )
 
+    # -----------------------------------------------------
+    # CURRENT STREAK
+    # -----------------------------------------------------
+
+    dates = set(
+        st.session_state.study_dates
+    )
+
+    today = date.today()
+
+    streak = 0
+
+    current_day = today
+
+    while (
+        str(current_day)
+        in dates
+    ):
+
+        streak += 1
+
+        current_day -= timedelta(
+            days=1
+        )
+
     st.metric(
         "Current Streak",
-        "5 Days"
+        f"{streak} Days"
     )
 
     st.divider()
 
     st.info(
         "Complete quizzes regularly to increase "
-        "your study progress."
+        "your study progress and maintain your streak."
     )
