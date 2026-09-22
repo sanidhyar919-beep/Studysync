@@ -1,12 +1,15 @@
 import streamlit as st
-from pypdf import PdfReader
 from openai import OpenAI
+from pypdf import PdfReader
+from supabase import create_client
 from datetime import date, timedelta
+import json
+import re
 
 
-# =========================================================
+# =========================
 # PAGE CONFIG
-# =========================================================
+# =========================
 
 st.set_page_config(
     page_title="StudySync",
@@ -15,38 +18,9 @@ st.set_page_config(
 )
 
 
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
-if "quiz_questions" not in st.session_state:
-    st.session_state.quiz_questions = []
-
-if "quiz_score" not in st.session_state:
-    st.session_state.quiz_score = None
-
-if "quizzes_completed" not in st.session_state:
-    st.session_state.quizzes_completed = 0
-
-if "topics_completed" not in st.session_state:
-    st.session_state.topics_completed = 0
-
-if "study_progress" not in st.session_state:
-    st.session_state.study_progress = 0
-
-if "study_dates" not in st.session_state:
-    st.session_state.study_dates = []
-
-if "flashcards" not in st.session_state:
-    st.session_state.flashcards = []
-
-
-# =========================================================
-# GROQ AI CONNECTION
-# =========================================================
+# =========================
+# AI CLIENT
+# =========================
 
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
@@ -54,337 +28,448 @@ client = OpenAI(
 )
 
 
+# =========================
+# SUPABASE CLIENT
+# =========================
+
+@st.cache_resource
+def get_supabase():
+    return create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"]
+    )
+
+
+supabase = get_supabase()
+
+
+# =========================
+# DATABASE FUNCTIONS
+# =========================
+
+def get_progress():
+    result = (
+        supabase
+        .table("progress")
+        .select(
+            "study_progress, topics_completed, quizzes_completed"
+        )
+        .eq("id", 1)
+        .single()
+        .execute()
+    )
+
+    return result.data
+
+
+def update_progress():
+    current = get_progress()
+
+    new_progress = min(
+        100,
+        current["study_progress"] + 5
+    )
+
+    new_topics = current["topics_completed"] + 1
+
+    new_quizzes = current["quizzes_completed"] + 1
+
+    (
+        supabase
+        .table("progress")
+        .update({
+            "study_progress": new_progress,
+            "topics_completed": new_topics,
+            "quizzes_completed": new_quizzes
+        })
+        .eq("id", 1)
+        .execute()
+    )
+
+
+def save_quiz_result(
+    topic,
+    score,
+    total,
+    percentage
+):
+
+    (
+        supabase
+        .table("quiz_history")
+        .insert({
+            "topic": topic,
+            "score": score,
+            "total": total,
+            "percentage": percentage,
+            "date": str(date.today())
+        })
+        .execute()
+    )
+
+
+def save_study_activity():
+
+    (
+        supabase
+        .table("study_activity")
+        .upsert({
+            "date": str(date.today())
+        })
+        .execute()
+    )
+
+
+def get_study_dates():
+
+    result = (
+        supabase
+        .table("study_activity")
+        .select("date")
+        .execute()
+    )
+
+    return [
+        row["date"]
+        for row in result.data
+    ]
+
+
+def get_current_streak():
+
+    dates = set(get_study_dates())
+
+    today = date.today()
+
+    streak = 0
+
+    current_day = today
+
+    while str(current_day) in dates:
+
+        streak += 1
+
+        current_day = (
+            current_day -
+            timedelta(days=1)
+        )
+
+    return streak
+
+
+def get_quiz_history():
+
+    result = (
+        supabase
+        .table("quiz_history")
+        .select(
+            "topic, score, total, percentage, date"
+        )
+        .order(
+            "id",
+            desc=True
+        )
+        .limit(10)
+        .execute()
+    )
+
+    return result.data
+
+
+# =========================
+# AI FUNCTION
+# =========================
+
 def ask_ai(prompt):
 
-    try:
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-20b",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are StudySync, an AI study assistant. "
+                    "Explain concepts in simple student-friendly language. "
+                    "Use examples whenever useful."
+                )
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0.5
+    )
 
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
-
-        return response.choices[0].message.content
-
-    except Exception as e:
-
-        return (
-            "AI connection failed\n\n"
-            f"{type(e).__name__}: {e}"
-        )
+    return response.choices[0].message.content
 
 
-# =========================================================
+# =========================
+# SESSION STATE
+# =========================
+
+if "quiz_questions" not in st.session_state:
+    st.session_state.quiz_questions = []
+
+if "quiz_score" not in st.session_state:
+    st.session_state.quiz_score = None
+
+if "quiz_submitted" not in st.session_state:
+    st.session_state.quiz_submitted = False
+
+if "flashcards" not in st.session_state:
+    st.session_state.flashcards = []
+
+
+# =========================
+# SIDEBAR
+# =========================
+
+st.sidebar.title("📚 StudySync")
+
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Home",
+        "Study Material",
+        "AI Study Assistant",
+        "AI Notes Generator",
+        "AI Quiz Generator",
+        "Flashcards",
+        "Progress Tracker"
+    ]
+)
+
+
+# =========================
 # HOME
-# =========================================================
+# =========================
 
-if st.session_state.page == "Home":
+if page == "Home":
 
     st.title("📚 StudySync")
 
     st.subheader(
-        "Your AI Powered Study Companion"
+        "Your AI-Powered Study Companion"
     )
 
-    st.write(
-        "Study smarter with AI-powered notes, quizzes, "
-        "flashcards and study assistance."
-    )
+    progress = get_progress()
+
+    streak = get_current_streak()
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Study Progress",
+            f'{progress["study_progress"]}%'
+        )
+
+    with col2:
+        st.metric(
+            "Topics Completed",
+            progress["topics_completed"]
+        )
+
+    with col3:
+        st.metric(
+            "Quizzes Completed",
+            progress["quizzes_completed"]
+        )
+
+    with col4:
+        st.metric(
+            "Current Streak",
+            f"{streak} Days"
+        )
 
     st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    st.markdown(
+        """
+        ### 🚀 What can StudySync do?
 
-    with col1:
-
-        if st.button(
-            "📄 Study Material",
-            use_container_width=True
-        ):
-            st.session_state.page = "Study Material"
-            st.rerun()
-
-    with col2:
-
-        if st.button(
-            "🤖 AI Study Assistant",
-            use_container_width=True
-        ):
-            st.session_state.page = "AI Study Assistant"
-            st.rerun()
-
-    with col3:
-
-        if st.button(
-            "📝 AI Notes Generator",
-            use_container_width=True
-        ):
-            st.session_state.page = "AI Notes Generator"
-            st.rerun()
-
-    col4, col5, col6 = st.columns(3)
-
-    with col4:
-
-        if st.button(
-            "🎯 AI Quiz Generator",
-            use_container_width=True
-        ):
-            st.session_state.page = "AI Quiz Generator"
-            st.rerun()
-
-    with col5:
-
-        if st.button(
-            "🗂️ Flashcards",
-            use_container_width=True
-        ):
-            st.session_state.page = "Flashcards"
-            st.rerun()
-
-    with col6:
-
-        if st.button(
-            "📊 Progress Tracker",
-            use_container_width=True
-        ):
-            st.session_state.page = "Progress Tracker"
-            st.rerun()
+        - 📄 Upload and study PDF material
+        - 🤖 Ask questions to AI
+        - 📝 Generate AI notes
+        - 🧠 Generate quizzes
+        - 🃏 Create flashcards
+        - 📊 Track your study progress
+        """
+    )
 
 
-# =========================================================
+# =========================
 # STUDY MATERIAL
-# =========================================================
+# =========================
 
-elif st.session_state.page == "Study Material":
+elif page == "Study Material":
 
     st.title("📄 Study Material")
 
-    if st.button("⬅️ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
-
     uploaded_file = st.file_uploader(
-        "Upload your study material",
+        "Upload your PDF",
         type=["pdf"]
     )
 
     if uploaded_file:
 
-        try:
+        reader = PdfReader(uploaded_file)
 
-            reader = PdfReader(uploaded_file)
+        text = ""
 
-            text = ""
+        for page_data in reader.pages:
+            extracted = page_data.extract_text()
 
-            for page in reader.pages:
+            if extracted:
+                text += extracted + "\n"
 
-                page_text = page.extract_text()
+        st.success(
+            f"PDF loaded successfully! "
+            f"{len(reader.pages)} pages found."
+        )
 
-                if page_text:
-                    text += page_text + "\n"
+        with st.expander("View extracted text"):
 
-            st.success(
-                "PDF uploaded successfully!"
+            st.write(
+                text[:10000]
             )
 
-            with st.expander(
-                "📖 Extracted Text"
-            ):
-
-                st.write(
-                    text[:12000]
-                )
-
-            if st.button(
-                "🤖 Generate AI Notes"
-            ):
-
-                with st.spinner(
-                    "Generating notes..."
-                ):
-
-                    prompt = f"""
-Create simple and clear study notes from the
-following study material.
-
-Use:
-
-- Important headings
-- Bullet points
-- Definitions
-- Examples
-- Important exam points
-
-Study Material:
-
-{text[:12000]}
-"""
-
-                    notes = ask_ai(prompt)
-
-                st.subheader(
-                    "📚 AI Generated Notes"
-                )
-
-                st.write(notes)
-
-        except Exception as e:
-
-            st.error(
-                f"Could not read the PDF: {e}"
-            )
-
-
-# =========================================================
-# AI STUDY ASSISTANT
-# =========================================================
-
-elif st.session_state.page == "AI Study Assistant":
-
-    st.title("🤖 AI Study Assistant")
-
-    if st.button("⬅️ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
-
-    question = st.text_area(
-        "Ask your study question:",
-        placeholder="Example: Explain Big Data in simple words."
-    )
-
-    if st.button("Ask AI"):
-
-        if question.strip() == "":
-
-            st.warning(
-                "Please enter a question."
-            )
-
-        else:
-
-            with st.spinner(
-                "AI is thinking..."
-            ):
-
-                prompt = f"""
-You are a helpful college study assistant.
-
-Explain the following question in simple,
-easy-to-understand language.
-
-Use examples wherever useful.
-
-Question:
-
-{question}
-"""
-
-                answer = ask_ai(prompt)
-
-            st.subheader(
-                "💡 AI Answer"
-            )
-
-            st.write(answer)
-
-
-# =========================================================
-# AI NOTES GENERATOR
-# =========================================================
-
-elif st.session_state.page == "AI Notes Generator":
-
-    st.title("📝 AI Notes Generator")
-
-    if st.button("⬅️ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
-
-    topic = st.text_input(
-        "Enter topic:",
-        placeholder="Example: Machine Learning"
-    )
-
-    if st.button(
-        "Generate Notes"
-    ):
-
-        if topic.strip() == "":
-
-            st.warning(
-                "Please enter a topic."
-            )
-
-        else:
+        if st.button("Generate AI Notes"):
 
             with st.spinner(
                 "Generating notes..."
             ):
 
-                prompt = f"""
-Create detailed but easy-to-understand
-college notes on:
+                notes = ask_ai(
+                    f"""
+                    Create simple exam-oriented notes
+                    from the following study material.
 
-{topic}
+                    Use:
+                    - headings
+                    - bullet points
+                    - important definitions
+                    - examples
 
-Include:
+                    Material:
 
-1. Definition
-2. Main concepts
-3. Important points
-4. Real-life examples
-5. Advantages
-6. Disadvantages
-7. Exam-oriented points
+                    {text[:15000]}
+                    """
+                )
 
-Use simple language.
-"""
-
-                notes = ask_ai(prompt)
-
-            st.subheader(
-                "📚 Generated Notes"
-            )
+            st.markdown("## 📝 AI Notes")
 
             st.write(notes)
 
 
-# =========================================================
-# AI QUIZ GENERATOR
-# =========================================================
+# =========================
+# AI STUDY ASSISTANT
+# =========================
 
-elif st.session_state.page == "AI Quiz Generator":
+elif page == "AI Study Assistant":
 
-    st.title("🎯 AI Quiz Generator")
+    st.title("🤖 AI Study Assistant")
 
-    if st.button("⬅️ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
+    question = st.text_area(
+        "Ask your study question"
+    )
+
+    if st.button("Ask AI"):
+
+        if question.strip():
+
+            with st.spinner(
+                "Thinking..."
+            ):
+
+                answer = ask_ai(question)
+
+            st.markdown("### Answer")
+
+            st.write(answer)
+
+            save_study_activity()
+
+        else:
+
+            st.warning(
+                "Please enter a question."
+            )
+
+
+# =========================
+# AI NOTES GENERATOR
+# =========================
+
+elif page == "AI Notes Generator":
+
+    st.title("📝 AI Notes Generator")
 
     topic = st.text_input(
-        "Enter quiz topic:",
-        placeholder="Example: Data Science"
+        "Enter topic"
     )
 
-    number_of_questions = st.selectbox(
-        "Number of Questions",
-        [5, 10]
+    if st.button("Generate Notes"):
+
+        if topic.strip():
+
+            with st.spinner(
+                "Creating notes..."
+            ):
+
+                notes = ask_ai(
+                    f"""
+                    Create detailed but easy-to-understand
+                    exam notes for:
+
+                    {topic}
+
+                    Include:
+                    1. Definition
+                    2. Important points
+                    3. Working / explanation
+                    4. Real-life example
+                    5. Exam points
+                    """
+                )
+
+            st.markdown("## 📚 Notes")
+
+            st.write(notes)
+
+            save_study_activity()
+
+        else:
+
+            st.warning(
+                "Please enter a topic."
+            )
+
+
+# =========================
+# AI QUIZ GENERATOR
+# =========================
+
+elif page == "AI Quiz Generator":
+
+    st.title("🧠 AI Quiz Generator")
+
+    topic = st.text_input(
+        "Enter quiz topic",
+        key="quiz_topic"
     )
 
-    # -----------------------------------------------------
-    # GENERATE QUIZ
-    # -----------------------------------------------------
+    number = st.slider(
+        "Number of questions",
+        3,
+        10,
+        5
+    )
 
-    if st.button(
-        "Generate Quiz"
-    ):
+    if st.button("Generate Quiz"):
 
-        if topic.strip() == "":
+        if not topic.strip():
 
             st.warning(
                 "Please enter a topic."
@@ -397,371 +482,116 @@ elif st.session_state.page == "AI Quiz Generator":
             ):
 
                 prompt = f"""
-Create exactly {number_of_questions}
-multiple-choice questions for college students.
-
-Topic:
-
-{topic}
-
-Use EXACTLY this format:
-
-QUESTION: question text
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: A
-
-The ANSWER must contain only:
-
-A, B, C or D.
-
-Make the questions educational,
-clear and different from each other.
-"""
-
-                quiz_text = ask_ai(
-                    prompt
-                )
-
-            # -------------------------------------------------
-            # PARSE QUIZ
-            # -------------------------------------------------
-
-            lines = quiz_text.splitlines()
-
-            questions = []
-
-            current = {}
-
-            for line in lines:
-
-                line = line.strip()
-
-                if line.startswith(
-                    "QUESTION:"
-                ):
-
-                    if current.get(
-                        "question"
-                    ):
-
-                        questions.append(
-                            current
-                        )
-
-                    current = {
-                        "question":
-                        line.replace(
-                            "QUESTION:",
-                            ""
-                        ).strip()
-                    }
-
-                elif line.startswith(
-                    "A:"
-                ):
-
-                    current["A"] = (
-                        line[2:].strip()
-                    )
-
-                elif line.startswith(
-                    "B:"
-                ):
-
-                    current["B"] = (
-                        line[2:].strip()
-                    )
-
-                elif line.startswith(
-                    "C:"
-                ):
-
-                    current["C"] = (
-                        line[2:].strip()
-                    )
-
-                elif line.startswith(
-                    "D:"
-                ):
-
-                    current["D"] = (
-                        line[2:].strip()
-                    )
-
-                elif line.startswith(
-                    "ANSWER:"
-                ):
-
-                    current["answer"] = (
-                        line.replace(
-                            "ANSWER:",
-                            ""
-                        )
-                        .strip()
-                        .upper()
-                    )
-
-            if current.get(
-                "question"
-            ):
-
-                questions.append(
-                    current
-                )
-
-            # -------------------------------------------------
-            # VALID QUESTIONS
-            # -------------------------------------------------
-
-            valid_questions = []
-
-            for q in questions:
-
-                if (
-                    q.get("question")
-                    and q.get("A")
-                    and q.get("B")
-                    and q.get("C")
-                    and q.get("D")
-                    and q.get("answer")
-                    in [
-                        "A",
-                        "B",
-                        "C",
-                        "D"
-                    ]
-                ):
-
-                    valid_questions.append(
-                        q
-                    )
-
-            # -------------------------------------------------
-            # RETRY IF QUESTIONS ARE MISSING
-            # -------------------------------------------------
-
-            attempts = 0
-
-            while (
-                len(valid_questions)
-                < number_of_questions
-                and attempts < 3
-            ):
-
-                attempts += 1
-
-                missing = (
-                    number_of_questions
-                    - len(valid_questions)
-                )
-
-                retry_prompt = f"""
-Create exactly {missing}
-additional multiple-choice questions
-on the topic:
-
-{topic}
-
-Do not repeat previous questions.
-
-Use EXACTLY this format:
-
-QUESTION: question text
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: A
-
-ANSWER must only be A, B, C or D.
-"""
-
-                retry_text = ask_ai(
-                    retry_prompt
-                )
-
-                retry_lines = (
-                    retry_text.splitlines()
-                )
-
-                current = {}
-
-                for line in retry_lines:
-
-                    line = line.strip()
-
-                    if line.startswith(
-                        "QUESTION:"
-                    ):
-
-                        if current.get(
-                            "question"
-                        ):
-
-                            questions.append(
-                                current
-                            )
-
-                        current = {
-                            "question":
-                            line.replace(
-                                "QUESTION:",
-                                ""
-                            ).strip()
-                        }
-
-                    elif line.startswith(
-                        "A:"
-                    ):
-
-                        current["A"] = (
-                            line[2:].strip()
-                        )
-
-                    elif line.startswith(
-                        "B:"
-                    ):
-
-                        current["B"] = (
-                            line[2:].strip()
-                        )
-
-                    elif line.startswith(
-                        "C:"
-                    ):
-
-                        current["C"] = (
-                            line[2:].strip()
-                        )
-
-                    elif line.startswith(
-                        "D:"
-                    ):
-
-                        current["D"] = (
-                            line[2:].strip()
-                        )
-
-                    elif line.startswith(
-                        "ANSWER:"
-                    ):
-
-                        current["answer"] = (
-                            line.replace(
-                                "ANSWER:",
-                                ""
-                            )
-                            .strip()
-                            .upper()
-                        )
-
-                if current.get(
-                    "question"
-                ):
-
-                    questions.append(
-                        current
-                    )
-
-                valid_questions = []
-
-                for q in questions:
-
-                    if (
-                        q.get("question")
-                        and q.get("A")
-                        and q.get("B")
-                        and q.get("C")
-                        and q.get("D")
-                        and q.get("answer")
-                        in [
-                            "A",
-                            "B",
-                            "C",
-                            "D"
-                        ]
-                    ):
-
-                        valid_questions.append(
-                            q
-                        )
-
-            # -------------------------------------------------
-            # SAVE QUIZ
-            # -------------------------------------------------
-
-            st.session_state.quiz_questions = (
-                valid_questions[
-                    :number_of_questions
+                Create {number} multiple choice questions
+                about {topic}.
+
+                Return ONLY valid JSON.
+
+                Format:
+
+                [
+                  {{
+                    "question": "Question",
+                    "options": [
+                      "Option A",
+                      "Option B",
+                      "Option C",
+                      "Option D"
+                    ],
+                    "answer": "Option A"
+                  }}
                 ]
-            )
 
-            st.session_state.quiz_score = None
+                Make exactly {number} questions.
+                """
 
-            if not st.session_state.quiz_questions:
+                response = ask_ai(prompt)
 
-                st.error(
-                    "AI could not generate a valid quiz. "
-                    "Please try again."
-                )
+                try:
 
-    # -----------------------------------------------------
-    # DISPLAY QUIZ
-    # -----------------------------------------------------
+                    cleaned = response.strip()
 
-    if st.session_state.quiz_questions:
+                    cleaned = re.sub(
+                        r"```json",
+                        "",
+                        cleaned
+                    )
 
-        questions = (
-            st.session_state.quiz_questions
+                    cleaned = re.sub(
+                        r"```",
+                        "",
+                        cleaned
+                    )
+
+                    start = cleaned.find("[")
+
+                    end = cleaned.rfind("]") + 1
+
+                    cleaned = cleaned[start:end]
+
+                    questions = json.loads(
+                        cleaned
+                    )
+
+                    st.session_state.quiz_questions = questions
+
+                    st.session_state.quiz_score = None
+
+                    st.session_state.quiz_submitted = False
+
+                    st.success(
+                        "Quiz generated successfully!"
+                    )
+
+                except Exception:
+
+                    st.error(
+                        "Quiz generation failed. "
+                        "Please try again."
+                    )
+
+
+    # -------------------------
+    # SHOW QUIZ
+    # -------------------------
+
+    questions = st.session_state.quiz_questions
+
+    if questions:
+
+        st.divider()
+
+        st.subheader(
+            "Answer the questions"
         )
-
-        st.success(
-            f"Generated {len(questions)} questions."
-        )
-
-        # -------------------------------------------------
-        # QUIZ FORM
-        # -------------------------------------------------
 
         with st.form(
             "quiz_form"
         ):
+
+            answers = []
 
             for i, q in enumerate(
                 questions
             ):
 
                 st.markdown(
-                    f"### Question {i + 1}"
+                    f"### Q{i + 1}. {q['question']}"
                 )
 
-                st.write(
-                    q["question"]
+                selected = st.radio(
+                    "Choose answer:",
+                    q["options"],
+                    key=f"q_{i}"
                 )
 
-                st.radio(
-                    "Choose your answer:",
-                    [
-                        q["A"],
-                        q["B"],
-                        q["C"],
-                        q["D"]
-                    ],
-                    key=f"quiz_answer_{i}"
+                answers.append(
+                    selected
                 )
 
-            submitted = (
-                st.form_submit_button(
-                    "✅ Submit Quiz"
-                )
+            submitted = st.form_submit_button(
+                "Submit Quiz"
             )
-
-        # -------------------------------------------------
-        # SUBMIT QUIZ
-        # -------------------------------------------------
 
         if submitted:
 
@@ -771,91 +601,34 @@ ANSWER must only be A, B, C or D.
                 questions
             ):
 
-                selected = (
-                    st.session_state[
-                        f"quiz_answer_{i}"
-                    ]
-                )
-
-                correct_option = q[
-                    q["answer"]
-                ]
-
-                if (
-                    selected
-                    == correct_option
-                ):
-
+                if answers[i] == q["answer"]:
                     score += 1
 
-            total = len(
-                questions
+            total = len(questions)
+
+            percentage = round(
+                (score / total) * 100
             )
 
-            percentage = (
-                score / total
-            ) * 100
+            st.session_state.quiz_score = score
 
-            # -------------------------------------------------
-            # UPDATE PROGRESS
-            # -------------------------------------------------
+            st.session_state.quiz_submitted = True
 
-            st.session_state.quizzes_completed += 1
-
-            st.session_state.topics_completed += 1
-
-            st.session_state.study_progress = min(
-                100,
-                st.session_state.study_progress + 5
-            )
-
-            # -------------------------------------------------
-            # SAVE TODAY'S STUDY ACTIVITY
-            # -------------------------------------------------
-
-            today = str(
-                date.today()
-            )
-
-            if (
-                today
-                not in st.session_state.study_dates
-            ):
-
-                st.session_state.study_dates.append(
-                    today
-                )
-
-            # Save score
-
-            st.session_state.quiz_score = (
+            # Save to database
+            save_quiz_result(
+                topic,
                 score,
                 total,
                 percentage
             )
 
-        # -------------------------------------------------
-        # QUIZ RESULT
-        # -------------------------------------------------
+            update_progress()
 
-        if (
-            st.session_state.quiz_score
-            is not None
-        ):
+            save_study_activity()
 
-            score, total, percentage = (
-                st.session_state.quiz_score
-            )
-
-            st.divider()
-
-            st.subheader(
-                "🏆 Quiz Result"
-            )
-
-            st.metric(
-                "Score",
-                f"{score}/{total}"
+            st.success(
+                f"Quiz submitted! "
+                f"Your score: {score}/{total}"
             )
 
             st.progress(
@@ -863,31 +636,17 @@ ANSWER must only be A, B, C or D.
             )
 
             st.write(
-                f"Percentage: "
-                f"{percentage:.1f}%"
+                f"### Score: {percentage}%"
             )
 
-            if percentage >= 80:
 
-                st.success(
-                    "Excellent work! 🎉"
-                )
+        # -------------------------
+        # ANSWER REVIEW
+        # -------------------------
 
-            elif percentage >= 50:
+        if st.session_state.quiz_submitted:
 
-                st.info(
-                    "Good job! Keep practicing. 👍"
-                )
-
-            else:
-
-                st.warning(
-                    "Keep studying and try again. 💪"
-                )
-
-            # -------------------------------------------------
-            # ANSWER REVIEW
-            # -------------------------------------------------
+            st.divider()
 
             st.subheader(
                 "📋 Answer Review"
@@ -897,63 +656,41 @@ ANSWER must only be A, B, C or D.
                 questions
             ):
 
-                selected = (
-                    st.session_state[
-                        f"quiz_answer_{i}"
-                    ]
+                st.write(
+                    f"**Q{i + 1}:** "
+                    f"{q['question']}"
                 )
 
-                correct_option = q[
-                    q["answer"]
-                ]
-
-                if (
-                    selected
-                    == correct_option
-                ):
-
-                    st.success(
-                        f"Question {i + 1}: "
-                        "Correct ✅"
-                    )
-
-                else:
-
-                    st.error(
-                        f"Question {i + 1}: "
-                        f"Your answer: {selected} | "
-                        f"Correct answer: "
-                        f"{correct_option}"
-                    )
+                st.write(
+                    f"Correct Answer: "
+                    f"**{q['answer']}**"
+                )
 
 
-# =========================================================
+# =========================
 # FLASHCARDS
-# =========================================================
+# =========================
 
-elif st.session_state.page == "Flashcards":
+elif page == "Flashcards":
 
-    st.title("🗂️ AI Flashcards")
-
-    if st.button("⬅️ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
+    st.title("🃏 AI Flashcards")
 
     topic = st.text_input(
-        "Enter topic for flashcards:",
-        placeholder="Example: Python"
+        "Enter topic for flashcards"
     )
 
-    number_of_cards = st.selectbox(
-        "Number of Flashcards",
-        [5, 10]
+    number = st.slider(
+        "Number of flashcards",
+        3,
+        15,
+        5
     )
 
     if st.button(
         "Generate Flashcards"
     ):
 
-        if topic.strip() == "":
+        if not topic.strip():
 
             st.warning(
                 "Please enter a topic."
@@ -962,195 +699,156 @@ elif st.session_state.page == "Flashcards":
         else:
 
             with st.spinner(
-                "Generating flashcards..."
+                "Creating flashcards..."
             ):
 
                 prompt = f"""
-Create {number_of_cards}
-study flashcards on:
+                Create {number} study flashcards
+                about {topic}.
 
-{topic}
+                Return ONLY valid JSON.
 
-Use this format:
+                Format:
 
-Q: question
-A: answer
-
-Keep answers short and useful
-for college students.
-"""
-
-                flashcard_text = ask_ai(
-                    prompt
-                )
-
-            lines = (
-                flashcard_text.splitlines()
-            )
-
-            cards = []
-
-            current_question = None
-
-            for line in lines:
-
-                line = line.strip()
-
-                if line.startswith(
-                    "Q:"
-                ):
-
-                    current_question = (
-                        line[2:].strip()
-                    )
-
-                elif (
-                    line.startswith("A:")
-                    and current_question
-                ):
-
-                    answer = (
-                        line[2:].strip()
-                    )
-
-                    cards.append(
-                        (
-                            current_question,
-                            answer
-                        )
-                    )
-
-                    current_question = None
-
-            st.session_state.flashcards = (
-                cards[
-                    :number_of_cards
+                [
+                  {{
+                    "question": "Question",
+                    "answer": "Answer"
+                  }}
                 ]
-            )
 
-    # -----------------------------------------------------
-    # DISPLAY FLASHCARDS
-    # -----------------------------------------------------
+                Make exactly {number} cards.
+                """
+
+                response = ask_ai(prompt)
+
+                try:
+
+                    cleaned = response.strip()
+
+                    cleaned = re.sub(
+                        r"```json",
+                        "",
+                        cleaned
+                    )
+
+                    cleaned = re.sub(
+                        r"```",
+                        "",
+                        cleaned
+                    )
+
+                    start = cleaned.find("[")
+
+                    end = cleaned.rfind("]") + 1
+
+                    cleaned = cleaned[start:end]
+
+                    cards = json.loads(
+                        cleaned
+                    )
+
+                    st.session_state.flashcards = cards
+
+                    st.success(
+                        "Flashcards generated!"
+                    )
+
+                    save_study_activity()
+
+                except Exception:
+
+                    st.error(
+                        "Could not generate flashcards. "
+                        "Please try again."
+                    )
+
 
     if st.session_state.flashcards:
 
-        st.success(
-            f"Generated "
-            f"{len(st.session_state.flashcards)} "
-            "flashcards."
-        )
+        st.divider()
 
         for i, card in enumerate(
             st.session_state.flashcards
         ):
 
-            question, answer = card
-
             with st.expander(
-                f"Card {i + 1}: {question}"
+                f"🃏 Card {i + 1}: "
+                f"{card['question']}"
             ):
 
                 st.write(
-                    f"**Answer:** {answer}"
+                    card["answer"]
                 )
 
 
-# =========================================================
+# =========================
 # PROGRESS TRACKER
-# =========================================================
+# =========================
 
-elif st.session_state.page == "Progress Tracker":
+elif page == "Progress Tracker":
 
-    st.title(
-        "📊 Progress Tracker"
-    )
+    st.title("📊 Progress Tracker")
 
-    st.write(
-        "Track your study progress."
-    )
+    progress = get_progress()
 
-    if st.button("⬅️ Back"):
+    streak = get_current_streak()
 
-        st.session_state.page = "Home"
-
-        st.rerun()
-
-    st.divider()
-
-    # -----------------------------------------------------
-    # STUDY PROGRESS
-    # -----------------------------------------------------
-
-    progress = (
-        st.session_state.study_progress
-    )
-
-    st.subheader(
-        "Study Progress"
-    )
-
-    st.progress(
-        progress / 100
-    )
-
-    st.metric(
-        "Study Progress",
-        f"{progress}%"
-    )
-
-    # -----------------------------------------------------
-    # TOPICS AND QUIZZES
-    # -----------------------------------------------------
-
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
 
         st.metric(
-            "Topics Completed",
-            st.session_state.topics_completed
+            "Study Progress",
+            f'{progress["study_progress"]}%'
         )
 
     with col2:
 
         st.metric(
-            "Quizzes Completed",
-            st.session_state.quizzes_completed
+            "Topics Completed",
+            progress["topics_completed"]
         )
 
-    # -----------------------------------------------------
-    # CURRENT STREAK
-    # -----------------------------------------------------
+    with col3:
 
-    dates = set(
-        st.session_state.study_dates
+        st.metric(
+            "Quizzes Completed",
+            progress["quizzes_completed"]
+        )
+
+    st.divider()
+
+    st.subheader(
+        "🔥 Current Streak"
     )
 
-    today = date.today()
-
-    streak = 0
-
-    current_day = today
-
-    while (
-        str(current_day)
-        in dates
-    ):
-
-        streak += 1
-
-        current_day -= timedelta(
-            days=1
-        )
-
     st.metric(
-        "Current Streak",
+        "Study Streak",
         f"{streak} Days"
     )
 
     st.divider()
 
-    st.info(
-        "Complete quizzes regularly to increase "
-        "your study progress and maintain your streak."
+    st.subheader(
+        "📝 Recent Quiz History"
     )
+
+    history = get_quiz_history()
+
+    if history:
+
+        for quiz in history:
+
+            st.write(
+                f"**{quiz['topic']}** — "
+                f"{quiz['score']}/{quiz['total']} "
+                f"({quiz['percentage']}%) — "
+                f"{quiz['date']}"
+            )
+
+    else:
+
+        st.info(
+            "No quiz history yet."
+        )
