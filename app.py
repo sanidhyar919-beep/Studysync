@@ -42,7 +42,7 @@ if "flashcards" not in st.session_state:
 
 
 # =========================================================
-# NORMAL APP CSS
+# MAIN APP CSS
 # =========================================================
 
 st.markdown(
@@ -152,7 +152,7 @@ st.markdown(
                 90deg,
                 #5865f2,
                 #8b5cf6,
-                #55d6ff
+                #55dfff
             );
     }
 
@@ -185,7 +185,7 @@ st.markdown(
 
 
 # =========================================================
-# STUDYSYNC INTRO / SPLASH SCREEN
+# INTRO ANIMATION
 # =========================================================
 
 if not st.session_state.intro_done:
@@ -457,7 +457,7 @@ if not st.session_state.intro_done:
 
 
 # =========================================================
-# GROQ AI
+# GROQ AI CLIENT
 # =========================================================
 
 client = OpenAI(
@@ -467,7 +467,7 @@ client = OpenAI(
 
 
 # =========================================================
-# SUPABASE
+# SUPABASE CLIENT
 # =========================================================
 
 @st.cache_resource
@@ -601,34 +601,188 @@ def get_quiz_history():
 
 
 # =========================================================
-# AI FUNCTION
+# IMPROVED AI FUNCTION
 # =========================================================
 
 def ask_ai(prompt):
 
     response = client.chat.completions.create(
+
         model="openai/gpt-oss-20b",
+
         messages=[
+
             {
                 "role": "system",
+
                 "content": """
-                You are StudySync,
-                an AI study assistant.
+You are StudySync, an advanced AI study assistant
+designed to help college students learn concepts
+clearly and effectively.
 
-                Explain concepts in simple,
-                student-friendly language.
+Your primary goal is understanding, not just answering.
 
-                Use clear headings,
-                bullet points,
-                examples and exam-oriented explanations.
-                """
+FOLLOW THESE RULES:
+
+1. UNDERSTAND THE QUESTION
+
+- Carefully understand what the student is asking.
+- Answer the exact question.
+- Do not go off-topic.
+- If the question is unclear, make a reasonable
+  assumption and clearly mention it.
+
+2. SIMPLE EXPLANATIONS
+
+- Explain difficult concepts in simple,
+  student-friendly language.
+- Avoid unnecessary technical jargon.
+- If a technical term is necessary,
+  explain it immediately.
+- Assume the student may be learning the topic
+  for the first time.
+
+3. STRUCTURE
+
+When appropriate, organize answers using:
+
+- Definition
+- Explanation
+- How it works
+- Example
+- Advantages
+- Disadvantages
+- Important points
+- Exam points
+
+Do not force every section when it is unnecessary.
+
+4. REAL-LIFE EXAMPLES
+
+- Use simple real-world examples whenever
+  they make the concept easier to understand.
+- Examples should actually relate to the concept.
+
+5. EXAM-ORIENTED ANSWERS
+
+For academic questions:
+
+- Give a clear definition first.
+- Explain the concept properly.
+- Highlight important points.
+- Add examples where useful.
+- Make the answer suitable for college exams.
+- If the student asks for a 5-mark or 10-mark answer,
+  adjust the depth accordingly.
+
+6. PROGRAMMING QUESTIONS
+
+For programming questions:
+
+- Give correct and runnable code when code is requested.
+- Explain the important parts of the code.
+- Keep explanations beginner-friendly.
+- Point out common mistakes when useful.
+- Do not provide unnecessarily complicated code.
+
+7. MATHEMATICS AND LOGIC
+
+- Solve step by step.
+- Show the important calculation or reasoning.
+- Check the final answer before giving it.
+- Do not skip important steps in a multi-step problem.
+
+8. ACCURACY
+
+- Never intentionally invent facts.
+- Do not create fake sources,
+  statistics or references.
+- If you are uncertain about something,
+  clearly say so instead of presenting it as certain.
+- Distinguish facts from assumptions.
+
+9. RESPONSE LENGTH
+
+- Give enough detail to properly understand the topic.
+- Do not make answers unnecessarily long.
+- For simple questions, give simple answers.
+- For difficult questions, provide deeper explanations.
+- Match the response length to the student's question.
+
+10. READABILITY
+
+- Use headings and bullet points when helpful.
+- Use short paragraphs.
+- Bold important terms when appropriate.
+- Keep the answer visually easy to study.
+
+11. LEARNING FIRST
+
+- Whenever possible, explain WHY something works,
+  not just WHAT it is.
+- Help the student understand the concept instead
+  of blindly memorizing it.
+
+12. COMPARISONS
+
+When comparing two concepts:
+
+- Explain both concepts separately.
+- Then provide a clear comparison.
+- Use a table when it improves understanding.
+
+13. REVISION
+
+When the student asks for revision material:
+
+- Keep it concise.
+- Highlight important exam points.
+- Include definitions and key differences.
+- Add examples when useful.
+
+14. TONE
+
+- Be friendly, supportive and patient.
+- Never make the student feel bad for asking
+  a basic question.
+- Respond like a knowledgeable tutor.
+
+15. DO NOT REPEAT
+
+- Avoid repeating the same point in multiple ways
+  unless repetition is specifically useful for learning.
+
+16. NO UNNECESSARY FILLER
+
+- Do not start every response with phrases like
+  "Sure!" or "Absolutely!".
+- Go directly to the useful explanation when possible.
+
+17. FINAL QUALITY CHECK
+
+Before answering, mentally check:
+
+- Did I answer the actual question?
+- Is the explanation accurate?
+- Is it easy for a college student to understand?
+- Did I include an example when useful?
+- Did I avoid unnecessary information?
+
+Your final answer should prioritize:
+
+CLARITY + ACCURACY + UNDERSTANDING + USEFULNESS.
+"""
             },
+
             {
                 "role": "user",
                 "content": prompt
             }
+
         ],
+
         temperature=0.5
+
     )
 
     return response.choices[0].message.content
@@ -838,16 +992,18 @@ elif page == "📄 Study Material":
 
                 notes = ask_ai(
                     f"""
-                    Create simple,
-                    exam-oriented notes
-                    from this material.
+                    Create clear,
+                    detailed and exam-oriented
+                    notes from this study material.
 
-                    Include headings,
-                    bullet points,
-                    important definitions,
-                    examples and key points.
+                    Make the notes easy for a college
+                    student to understand.
 
-                    Material:
+                    Include important definitions,
+                    concepts, examples, key points
+                    and likely exam points.
+
+                    Study material:
 
                     {text[:15000]}
                     """
@@ -943,20 +1099,25 @@ elif page == "📝 AI Notes Generator":
 
                 notes = ask_ai(
                     f"""
-                    Create detailed but easy
-                    exam-oriented notes for:
+                    Create detailed,
+                    clear and exam-oriented
+                    notes for:
 
                     {topic}
+
+                    Explain everything in
+                    simple student-friendly language.
 
                     Include:
 
                     1. Definition
-                    2. Important points
-                    3. Working
-                    4. Real-life example
-                    5. Advantages
-                    6. Disadvantages
-                    7. Important exam points
+                    2. Explanation
+                    3. How it works
+                    4. Important points
+                    5. Real-life example
+                    6. Advantages
+                    7. Disadvantages
+                    8. Important exam points
                     """
                 )
 
@@ -1019,8 +1180,12 @@ elif page == "🧠 AI Quiz Generator":
             ):
 
                 prompt = f"""
-                Create {number} multiple choice
-                questions about {topic}.
+                Create {number} high-quality
+                multiple choice questions
+                about {topic}.
+
+                Questions should test actual
+                understanding, not just wording.
 
                 Return ONLY valid JSON.
 
@@ -1039,7 +1204,14 @@ elif page == "🧠 AI Quiz Generator":
                     }}
                 ]
 
-                Make exactly {number} questions.
+                Requirements:
+
+                - Exactly {number} questions
+                - Exactly 4 options per question
+                - Exactly one correct answer
+                - Plausible incorrect options
+                - No duplicate questions
+                - Accurate answers
                 """
 
                 response = ask_ai(
@@ -1249,8 +1421,12 @@ elif page == "🃏 Flashcards":
             ):
 
                 prompt = f"""
-                Create {number} flashcards
+                Create {number}
+                high-quality flashcards
                 about {topic}.
+
+                Focus on important concepts,
+                definitions and exam-relevant facts.
 
                 Return ONLY valid JSON.
 
@@ -1263,7 +1439,13 @@ elif page == "🃏 Flashcards":
                     }}
                 ]
 
-                Make exactly {number} cards.
+                Requirements:
+
+                - Exactly {number} cards
+                - Clear questions
+                - Accurate answers
+                - No duplicate cards
+                - Easy to revise
                 """
 
                 response = ask_ai(
